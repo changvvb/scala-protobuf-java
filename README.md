@@ -1,5 +1,7 @@
 # scala-protobuf-java
 
+![Scala CI](https://github.com/changvvb/scala-protobuf-java/workflows/Scala%20CI/badge.svg)
+
 example
 ```scala
 class MapSpec extends AnyFunSuite {
