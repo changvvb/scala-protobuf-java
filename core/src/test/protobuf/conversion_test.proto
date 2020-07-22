@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option java_package = "com.github.changvvb.protobuf";
+
+import "google/protobuf/wrappers.proto";
+
+message TestMessageDto {
+    int64 id = 1;
+    string name = 2;
+    google.protobuf.StringValue desc = 3;
+    map<string, string> string_string_attrs = 4;
+    map<int64, string> long_string_attrs = 5;
+    map<int32, google.protobuf.StringValue> int_string_value_attrs = 6;
+}

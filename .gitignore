@@ -1,0 +1,8 @@
+# sbt
+bin/
+project/
+target/
+build/
+
+# mac
+.DS_Store
