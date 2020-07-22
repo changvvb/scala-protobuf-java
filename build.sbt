@@ -1,6 +1,6 @@
 import sbt._
 
-name := "java-protobuf-scala"
+name := "scala-protobuf-java"
 
 version := "0.1"
 
