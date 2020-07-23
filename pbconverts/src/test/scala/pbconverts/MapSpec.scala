@@ -5,7 +5,7 @@ import pbconverts.ConversionTest.TestMessageDto
 
 class MapSpec extends AnyFunSuite {
   test("test map") {
-    val testMessage                    = TestMessage(1, "name", Some("desc"), Map("key" -> "value"), Map.empty, Map.empty)
+    val testMessage = TestMessage(1, "name", Some("desc"), Map("key" -> "value"), Map.empty, Map.empty)
     val testMessageDto: TestMessageDto = Protoable[TestMessage, TestMessageDto].toProto(testMessage)
     assert(testMessageDto.getId == testMessage.id)
     assert(testMessageDto.getStringStringAttrsOrThrow("key") == "value")
