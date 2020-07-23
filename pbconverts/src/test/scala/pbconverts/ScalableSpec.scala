@@ -6,7 +6,7 @@ import pbconverts.ConversionTest.PersonDto
 
 class ScalableSpec extends AnyFunSuite {
   test("Scalable") {
-    val person = Person(1L,"person name", Some("123456"),Seq("play games", "sing song"))
+    val person = Person(1L, "person name", Some("123456"), Seq("play games", "sing song"))
 
     val builder = PersonDto.newBuilder()
     builder.setId(1L)
@@ -19,11 +19,11 @@ class ScalableSpec extends AnyFunSuite {
     val person1 = Person(
       personDto.getId,
       personDto.getName,
-      if(personDto.hasPhone) Some(personDto.getPhone.getValue) else None,
+      if (personDto.hasPhone) Some(personDto.getPhone.getValue) else None,
       scala.collection.JavaConverters.iterableAsScalaIterable(personDto.getHobbiesList).toSeq
     )
 
-    val person2 = Scalable[Person,PersonDto].toScala(builder.build())
+    val person2 = Scalable[Person, PersonDto].toScala(builder.build())
 
     assert(person1 == person2)
   }
