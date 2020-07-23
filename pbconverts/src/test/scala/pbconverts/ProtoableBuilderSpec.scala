@@ -6,12 +6,15 @@ import pbconverts.ConversionTest.TestMessageDto
 class ProtoableBuilderSpec extends AnyFunSuite {
   test("test map") {
     val testMessage = TestMessage(1, "name", Some("desc"), Map("key" -> "value"), Map.empty, Map.empty)
-    val testMessageDto: TestMessageDto = Protoable[TestMessage, TestMessageDto].toProto(testMessage)
-    assert(testMessageDto.getId == testMessage.id)
-    assert(testMessageDto.getStringStringAttrsOrThrow("key") == "value")
+    val testMessageDto: TestMessageDto = ProtoableBuilder[TestMessage, TestMessageDto]
+      .setField(_.getDesc, _.desc.map("updated " + _))
+      .build
+      .toProto(testMessage)
+
+    assert(testMessageDto.getDesc.getValue == "updated desc")
 
     val testMessage2 = Scalable[TestMessage, TestMessageDto].toScala(testMessageDto)
-    assert(testMessage == testMessage2)
+    assert(testMessage.copy(desc = Some("updated desc")) == testMessage2)
   }
 
 }
