@@ -12,3 +12,10 @@ message TestMessageDto {
     map<int64, string> long_string_attrs = 5;
     map<int32, google.protobuf.StringValue> int_string_value_attrs = 6;
 }
+
+message PersonDto {
+    int64 id = 1;
+    string name = 2;
+    google.protobuf.StringValue phone = 3;
+    repeated string hobbies = 4;
+}
