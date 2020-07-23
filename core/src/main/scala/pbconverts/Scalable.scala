@@ -1,12 +1,12 @@
-package com.github.changvvb.conversion
+package pbconverts
 
 import java.time.{Instant, ZoneId, ZonedDateTime}
 
 import com.google.protobuf.{BoolValue, DoubleValue, FloatValue, Int32Value, Int64Value, StringValue, Timestamp}
 
 import scala.collection.JavaConverters._
-import scala.collection.generic.CanBuildFrom
 import scala.collection.TraversableLike
+import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
 trait Scalable[+T, -M] {

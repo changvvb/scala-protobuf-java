@@ -1,4 +1,4 @@
-package com.github.changvvb.conversion
+package pbconverts
 
 import scala.collection.mutable
 import scala.reflect.macros.whitebox
@@ -8,7 +8,7 @@ import scala.reflect.macros.whitebox
 class ProtoScalableMacro(val c: whitebox.Context) {
   import c.universe._
 
-  private[this] def packageName: Tree = q"_root_.com.github.changvvb.conversion"
+  private[this] def packageName: Tree = q"_root_.pbconverts"
   private[this] def builderIdent = Ident(TermName("builder"))
   private[this] def entityIdent = Ident(TermName("entity"))
   private[this] def protoIdent = Ident(TermName("proto"))

@@ -1,4 +1,4 @@
-package com.github.changvvb.conversion
+package pbconverts
 
 trait ProtoScalable[T, M] extends Protoable[T, M] with Scalable[T, M]
 

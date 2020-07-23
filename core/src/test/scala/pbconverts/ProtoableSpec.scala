@@ -1,8 +1,8 @@
-package com.github.changvvb.conversion
+package pbconverts
 
-import com.github.changvvb.protobuf.ConversionTest.PersonDto
 import com.google.protobuf.StringValue
 import org.scalatest.funsuite.AnyFunSuite
+import pbconverts.ConversionTest.PersonDto
 
 class ProtoableSpec extends AnyFunSuite {
   test("Protoable") {

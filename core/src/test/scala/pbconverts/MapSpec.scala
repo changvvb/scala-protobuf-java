@@ -1,9 +1,9 @@
-package com.github.changvvb.conversion
+package pbconverts
 
-import com.github.changvvb.protobuf.ConversionTest.TestMessageDto
 import org.scalatest.funsuite.AnyFunSuite
+import pbconverts.ConversionTest.TestMessageDto
 
-class ProtoableBuilderSpec extends AnyFunSuite {
+class MapSpec extends AnyFunSuite {
   test("test map") {
     val testMessage = TestMessage(1,"name",Some("desc"),Map("key" -> "value"),Map.empty,Map.empty)
     val testMessageDto: TestMessageDto = Protoable[TestMessage,TestMessageDto].toProto(testMessage)

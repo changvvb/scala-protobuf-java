@@ -1,4 +1,4 @@
-package com.github.changvvb.conversion
+package pbconverts
 
 import com.google.protobuf.StringValue
 
