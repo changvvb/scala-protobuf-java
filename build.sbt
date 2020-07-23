@@ -2,15 +2,23 @@ import sbt._
 
 name := "scala-protobuf-java"
 
-version := "0.1"
-
 scalaVersion := "2.13.3"
 
+val publishSetting = publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (version.value.trim.endsWith("SNAPSHOT"))
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+
 val commonSettings = Seq(
-    scalacOptions += "-language:experimental.macros"
+    scalacOptions += "-language:experimental.macros",
+    organization := "com.github.changvvb",
+    publishSetting
 )
 
-lazy val `macro` = project.in(file("pbconverts-macro"))
+lazy val `pbconverts-macro` = project.in(file("pbconverts-macro"))
   .settings(libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     "org.typelevel" %% "macro-compat" % "1.1.1",
@@ -19,13 +27,14 @@ lazy val `macro` = project.in(file("pbconverts-macro"))
   .settings(commonSettings)
   .enablePlugins(ProtobufPlugin)
 
-lazy val core = project.in(file("pbconverts"))
+lazy val pbconverts = project.in(file("pbconverts"))
   .settings(libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test")
   .settings(commonSettings)
-  .dependsOn(`macro`)
+  .dependsOn(`pbconverts-macro`)
   .enablePlugins(ProtobufTestPlugin)
 
 lazy val root = project.in(file(".")).withId("root")
-  .aggregate(`macro`,core)
+  .aggregate(`pbconverts-macro`,pbconverts)
+    .settings(commonSettings)
 
 scalafmtOnCompile in ThisBuild := true
