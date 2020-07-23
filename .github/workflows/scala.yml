@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: namely/protoc-all
+    runs-on: namely/protoc-all:1.29_2
 
     steps:
     - uses: actions/checkout@v2
