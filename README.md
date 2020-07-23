@@ -3,6 +3,11 @@
 ![Scala CI](https://github.com/changvvb/scala-protobuf-java/workflows/Scala%20CI/badge.svg)
 [![codecov](https://codecov.io/gh/changvvb/scala-protobuf-java/branch/master/graph/badge.svg)](https://codecov.io/gh/changvvb/scala-protobuf-java)
 
+sbt
+```scala
+libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.1.0-SNAPSHOT"
+```
+
 Define case class `Person`
 ```scala
 case class Person(id: Long, name: String, phone: Option[String], hobbies: Seq[String])
