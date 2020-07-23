@@ -1,6 +1,7 @@
 # scala-protobuf-java
 
 ![Scala CI](https://github.com/changvvb/scala-protobuf-java/workflows/Scala%20CI/badge.svg)
+[![codecov](https://codecov.io/gh/changvvb/scala-protobuf-java/branch/master/graph/badge.svg)](https://codecov.io/gh/changvvb/scala-protobuf-java)
 
 example
 ```scala
