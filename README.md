@@ -9,7 +9,7 @@ case class Person(id: Long, name: String, phone: Option[String], hobbies: Seq[St
 ```
 
 Define protobuf message `PersionDto`
-```proto3
+```proto
 message PersonDto {
     int64 id = 1;
     string name = 2;
