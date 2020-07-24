@@ -21,5 +21,7 @@ jobs:
         java-version: 1.8
     - name: Run tests
       run: sbt clean coverage test coverageReport
+    - name: Run tests for 2.12.10
+      run: sbt ++2.12.10 clean coverage test coverageReport
     - name: Upload test coverage report
       run: bash <(curl -s https://codecov.io/bash) -t 710dec5a-c3f6-49d0-afea-5efdbc37894a
