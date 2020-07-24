@@ -21,20 +21,19 @@ val commonSettings = Seq(
     scalaVersion := scala213,
     scalacOptions += "-language:experimental.macros",
     organization := "com.github.changvvb",
+    crossScalaVersions := supportedScalaVersions,
     publishSetting
 )
 
 lazy val `pbconverts-macro` = project.in(file("pbconverts-macro"))
   .settings(libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value))
   .settings(commonSettings)
-  .settings(crossScalaVersions := supportedScalaVersions)
   .enablePlugins(ProtobufPlugin)
 
 lazy val pbconverts = project.in(file("pbconverts"))
   .settings(libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test")
   .settings(commonSettings)
   .dependsOn(`pbconverts-macro`)
-  .settings(crossScalaVersions := supportedScalaVersions)
   .enablePlugins(ProtobufTestPlugin)
 
 lazy val root = project.in(file(".")).withId("root")
