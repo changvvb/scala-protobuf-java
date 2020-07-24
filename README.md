@@ -5,7 +5,7 @@
 
 sbt
 ```scala
-libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.1.0-SNAPSHOT"
+libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.1.1"
 ```
 
 Define case class `Person`
