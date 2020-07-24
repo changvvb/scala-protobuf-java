@@ -33,4 +33,8 @@ lazy val `scala-protobuf-java` = project.in(file("pbconverts"))
   .dependsOn(`scala-protobuf-java-macro`)
   .enablePlugins(ProtobufTestPlugin)
 
+lazy val root = project.in(file(".")).withId("root")
+  .aggregate(`scala-protobuf-java`, `scala-protobuf-java-macro`)
+  .settings(publishArtifact := false)
+
 scalafmtOnCompile in ThisBuild := true
