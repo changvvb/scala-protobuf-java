@@ -10,6 +10,7 @@ val commonSettings = Seq(
     scalacOptions += "-language:experimental.macros",
     organization := "com.github.changvvb",
     crossScalaVersions := supportedScalaVersions,
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value
 )
 
 lazy val `scala-protobuf-java-macro` = project.in(file("pbconverts-macro"))
