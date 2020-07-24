@@ -4,7 +4,6 @@ import scala.collection.mutable
 import scala.reflect.macros.whitebox
 
 // scalastyle:off number.of.methods
-@macrocompat.bundle
 class ProtoScalableMacro(val c: whitebox.Context) {
   import c.universe._
 
