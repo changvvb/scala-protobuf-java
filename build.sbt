@@ -1,8 +1,5 @@
 import sbt._
 
-name := "scala-protobuf-java"
-
-
 lazy val scala213 = "2.13.3"
 lazy val scala212 = "2.12.10"
 
@@ -25,19 +22,15 @@ val commonSettings = Seq(
     publishSetting
 )
 
-lazy val `pbconverts-macro` = project.in(file("pbconverts-macro"))
+lazy val `scala-protobuf-java-macro` = project.in(file("pbconverts-macro"))
   .settings(libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value))
   .settings(commonSettings)
   .enablePlugins(ProtobufPlugin)
 
-lazy val pbconverts = project.in(file("pbconverts"))
+lazy val `scala-protobuf-java` = project.in(file("pbconverts"))
   .settings(libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test")
   .settings(commonSettings)
-  .dependsOn(`pbconverts-macro`)
+  .dependsOn(`scala-protobuf-java-macro`)
   .enablePlugins(ProtobufTestPlugin)
-
-lazy val root = project.in(file(".")).withId("root")
-  .aggregate(`pbconverts-macro`,pbconverts)
-    .settings(commonSettings)
 
 scalafmtOnCompile in ThisBuild := true
