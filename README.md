@@ -2,6 +2,8 @@
 
 ![Scala CI](https://github.com/changvvb/scala-protobuf-java/workflows/Scala%20CI/badge.svg)
 [![codecov](https://codecov.io/gh/changvvb/scala-protobuf-java/branch/master/graph/badge.svg)](https://codecov.io/gh/changvvb/scala-protobuf-java)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.changvvb/scala-protobuf-java_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.changvvb/scala-protobuf-java_2.13)
+
 
 sbt
 ```scala
