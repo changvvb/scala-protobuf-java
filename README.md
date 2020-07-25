@@ -5,9 +5,17 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.changvvb/scala-protobuf-java_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.changvvb/scala-protobuf-java_2.13)
 
 
-sbt
+sbt 
 ```scala
 libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.1.1"
+```
+maven
+```xml
+<dependency>
+  <groupId>com.github.changvvb</groupId>
+  <artifactId>scala-protobuf-java_2.13</artifactId>
+  <version>0.1.1</version>
+</dependency>
 ```
 
 Define case class `Person`
@@ -33,7 +41,7 @@ person.phone.foreach(p => builder.setPhone(StringValue.of(p)))
 person.hobbies.foreach(builder.addHobbies)
 val personDto:PersonDto = builder.build()
 ``` 
-On the contrary, You can convert `PersonDto` to `Person` like this
+On the contrary, you can convert `PersonDto` to `Person` like this
 ```scala
 val person1 = Person(
   personDto.getId,
