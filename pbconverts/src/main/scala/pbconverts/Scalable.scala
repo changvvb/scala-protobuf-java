@@ -4,6 +4,9 @@ import java.time.{Instant, ZoneId, ZonedDateTime}
 
 import com.google.protobuf.{BoolValue, DoubleValue, FloatValue, Int32Value, Int64Value, StringValue, Timestamp}
 
+import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
+
 trait Scalable[+T, -M] {
   def toScala(proto: M): T
 }
@@ -34,6 +37,14 @@ object Scalable extends ScalableImplicits {
   implicit val zonedDateTimeProtoable = Scalable[ZonedDateTime, Timestamp] { proto ⇒
     Instant.ofEpochSecond(proto.getSeconds, proto.getNanos).atZone(ZoneId.systemDefault())
   }
+
+  //   java.lang.Iterable[M] => Array[T]
+  implicit def arrayScalable[T: ClassTag, M](implicit scalable: Scalable[T, M]): Scalable[Array[T], java.lang.Iterable[M]] =
+    Scalable { proto ⇒
+      proto.asScala.map(scalable.toScala).toArray
+    }
+
+  implicit def arrayScalable2[T: ClassTag]: Scalable[Array[T], java.lang.Iterable[T]] = Scalable { proto ⇒ proto.asScala.toArray }
 
   // M => Option[T]
   implicit def optScalable[T, M](implicit scalable: Scalable[T, M]): Scalable[Option[T], M] =

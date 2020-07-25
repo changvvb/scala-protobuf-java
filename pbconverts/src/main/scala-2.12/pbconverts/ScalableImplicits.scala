@@ -19,14 +19,6 @@ trait ScalableImplicits {
   implicit def iterableScalable2[That[_], T](implicit bf: CanBuildFrom[Nothing, T, That[T]]): Scalable[That[T], java.lang.Iterable[T]] =
     Scalable { proto ⇒ proto.asScala.to[That] }
 
-  // java.lang.Iterable[M] => Array[T]
-  implicit def arrayScalable[T: ClassTag, M](implicit scalable: Scalable[T, M]): Scalable[Array[T], java.lang.Iterable[M]] =
-    Scalable { proto ⇒
-      proto.asScala.map(scalable.toScala).toArray
-    }
-
-  implicit def arrayScalable2[T: ClassTag]: Scalable[Array[T], java.lang.Iterable[T]] = Scalable { proto ⇒ proto.asScala.toArray }
-
   // Repr[M] => That[T]
   implicit def iterableSelfScalable[That, Repr <: TraversableLike[M, Repr], T, M](implicit
       scalable: Scalable[T, M],

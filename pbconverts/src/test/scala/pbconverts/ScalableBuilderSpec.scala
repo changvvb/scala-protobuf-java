@@ -4,16 +4,20 @@ import org.scalatest.funsuite.AnyFunSuite
 import pbconverts.ConversionTest.TestMessageDto
 
 class ScalableBuilderSpec extends AnyFunSuite {
-  test("test map") {
-    val testMessage = TestMessage(1, "name", Some("desc"), Map("key" -> "value"), Map.empty, Map.empty)
+  test("test ScalableBuilder") {
+    assertTestMessage(TestMessage.default)
+    assertTestMessage(TestMessage.zero)
+  }
+
+  def assertTestMessage(testMessage: TestMessage) = {
     val testMessageDto = Protoable[TestMessage, TestMessageDto].toProto(testMessage)
     val testMessage2 = ScalableBuilder[TestMessage, TestMessageDto]
-      .setField(_.desc, m => if (m.hasDesc) Some("updated " + m.getDesc.getValue) else None)
+      .setField(_.intOpt, m => if (m.hasIntOpt) Some(m.getIntOpt.getValue + 1) else None)
       .build
       .toScala(testMessageDto)
 
-    assert(testMessage2.desc.contains("updated desc"))
-    assert(testMessage2.copy(desc = Some("desc")) == testMessage)
+    assert(testMessage2.intArray.sameElements(testMessage.intArray))
+    assert(testMessage2.stringArray.sameElements(testMessage.stringArray))
+    assert(testMessage == testMessage2.copy(intOpt = testMessage2.intOpt.map(_ - 1), intArray = testMessage.intArray, stringArray = testMessage.stringArray))
   }
-
 }

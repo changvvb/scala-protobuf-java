@@ -45,13 +45,13 @@ object Protoable {
   implicit def iterableProtoable2[T]: Protoable[scala.Iterable[T], java.util.List[T]] =
     Protoable[scala.Iterable[T], java.util.List[T]] { entity ⇒ entity.toList.asJava }
 
-  implicit def arrayProtoable[T, M](implicit protoable: Protoable[T, M]): Protoable[Array[T], java.util.List[M]] =
+  implicit def arrayProtoable[T]: Protoable[Array[T], java.util.List[T]] =
+    Protoable[Array[T], java.util.List[T]] { entity ⇒ entity.toList.asJava }
+
+  implicit def arrayProtoable2[T, M](implicit protoable: Protoable[T, M]): Protoable[Array[T], java.lang.Iterable[M]] =
     Protoable[Array[T], java.util.List[M]] { entity ⇒
       entity.toList.map(protoable.toProto).asJava
     }
-
-  implicit def arrayProtoable[T]: Protoable[Array[T], java.util.List[T]] =
-    Protoable[Array[T], java.util.List[T]] { entity ⇒ entity.toList.asJava }
 
   implicit def optProtoable[F, Target <: Any](implicit protoable: Protoable[F, Target]): Protoable[Option[F], Target] =
     Protoable[Option[F], Target] { entity: Option[F] ⇒

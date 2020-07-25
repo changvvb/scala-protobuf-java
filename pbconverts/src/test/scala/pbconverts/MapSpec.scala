@@ -5,13 +5,14 @@ import pbconverts.ConversionTest.TestMessageDto
 
 class MapSpec extends AnyFunSuite {
   test("test map") {
-    val testMessage = TestMessage(1, "name", Some("desc"), Map("key" -> "value"), Map.empty, Map.empty)
-    val testMessageDto: TestMessageDto = Protoable[TestMessage, TestMessageDto].toProto(testMessage)
-    assert(testMessageDto.getId == testMessage.id)
-    assert(testMessageDto.getStringStringAttrsOrThrow("key") == "value")
+    val testMessage = TestMessage.default
 
-    val testMessage2 = Scalable[TestMessage, TestMessageDto].toScala(testMessageDto)
-    assert(testMessage == testMessage2)
+    val testMessageDto: TestMessageDto = Protoable[TestMessage, TestMessageDto].toProto(testMessage)
+    assert(testMessageDto.getIntValue == testMessage.intValue)
+    assert(testMessageDto.getLongIntKVOrThrow(1L) == 1)
+    assert(testMessageDto.getLongStringKVOrThrow(1L) == "string1")
+    assert(testMessageDto.getStringIntKVOrThrow("string1") == 1)
+    assert(testMessageDto.getStringStringKVOrThrow("string1") == "string1")
   }
 
 }
