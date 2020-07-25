@@ -9,7 +9,7 @@
 `scala-protobuf-java` is a conversion tool between `scala` types and `protobuf-java` types. It can help impatient you save a lot of codes.
 `scala-protobuf-java` use scala macro to generate what you need, so it's type safe at compile time. Now you just keep free to write your code, `scala-proto-java` will check the error at compile time. 
 
-### Dependency
+### Import to your project
 sbt (for `2.12` and `2.13`. If you need more, just submit a issue or PR)
 ```scala
 libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.1.1"
