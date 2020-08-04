@@ -28,7 +28,11 @@ maven
 #### Basic usage
 Define case class `Person`
 ```scala
-case class Person(id: Long, name: String, phone: Option[String], hobbies: Seq[String])
+case class Person(
+  id: Long,
+  name: String,
+  phone: Option[String],
+  hobbies: Seq[String])
 ```
 
 Define protobuf message `PBPerson`
