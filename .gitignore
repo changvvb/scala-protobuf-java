@@ -6,3 +6,5 @@ build/
 
 # mac
 .DS_Store
+
+.idea
