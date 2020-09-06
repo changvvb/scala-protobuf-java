@@ -5,16 +5,16 @@ option java_package = "pbconverts";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
 
-message TestMessageDto {
+message TestMessagePB {
     int32 int_value = 1;
     int64 long_value = 2;
     float float_value = 3;
     double double_value = 4;
     bool bool_value = 5;
     string string_value = 6;
-    google.protobuf.Int32Value int_Opt = 7;
-    google.protobuf.Int64Value long_Opt = 8;
-    google.protobuf.FloatValue float_Opt = 9;
+    google.protobuf.Int32Value int_opt = 7;
+    google.protobuf.Int64Value long_opt = 8;
+    google.protobuf.FloatValue float_opt = 9;
     google.protobuf.DoubleValue double_opt = 10;
     google.protobuf.BoolValue bool_opt = 11;
     google.protobuf.StringValue string_opt = 12;
@@ -27,6 +27,8 @@ message TestMessageDto {
     map<int64,string> long_string_k_v = 19;
     map<string, int32> string_int_k_v = 20;
     map<int64,int32> long_int_k_v = 21;
+    int32 generic_value = 22;
+    google.protobuf.Int32Value generic_opt = 23;
 }
 
 message PersonDto {

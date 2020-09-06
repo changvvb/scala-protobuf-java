@@ -77,3 +77,20 @@ object TestMessage {
       longIntKV = Map.empty
     )
 }
+
+case class TestGenericMessage[T](
+    genericValue: T,
+    genericOpt: Option[T]
+)
+object TestGenericMessage {
+  def intDefault =
+    TestGenericMessage[Int](
+      genericValue = 9,
+      genericOpt = Some(9)
+    )
+  def intZero =
+    TestGenericMessage[Int](
+      genericValue = 0,
+      genericOpt = None
+    )
+}
