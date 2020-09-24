@@ -35,3 +35,7 @@ message PersonDto {
     google.protobuf.StringValue phone = 3;
     repeated string hobbies = 4;
 }
+
+message PBTestBytes {
+    bytes test_bytes = 1;
+}

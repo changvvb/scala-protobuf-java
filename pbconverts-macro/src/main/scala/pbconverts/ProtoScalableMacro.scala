@@ -1,5 +1,7 @@
 package pbconverts
 
+import com.google.protobuf.ByteString
+
 import scala.collection.mutable
 import scala.reflect.macros.whitebox
 
@@ -18,7 +20,9 @@ class ProtoScalableMacro(val c: whitebox.Context) {
   private[this] def isOption(tpe: Type): Boolean = tpe <:< typeOf[Option[_]]
 
   private[this] def isIterable(tpe: Type): Boolean =
-    (tpe <:< typeOf[Iterable[_]] || tpe <:< typeOf[Array[_]] || tpe <:< typeOf[java.lang.Iterable[_]]) && !(tpe <:< typeOf[Map[_, _]])
+    (tpe <:< typeOf[Iterable[_]]
+      || tpe <:< typeOf[Array[_]]
+      || tpe <:< typeOf[java.lang.Iterable[_]]) && !(tpe <:< typeOf[Map[_, _]] || tpe <:< typeOf[ByteString])
 
   private[this] def isMap(tpe: Type): Boolean = tpe <:< typeOf[Map[_, _]] || tpe <:< typeOf[java.util.Map[_, _]]
 
@@ -31,30 +35,15 @@ class ProtoScalableMacro(val c: whitebox.Context) {
     def caseClassType: Type
     def protoType: Type
 
-    def optTree(optFieldType: Type): Tree
-    def seqTree(iterableType: Type): Tree
-    def mapTree(mapType: Type): Tree
-    def defaultTree(fieldType: Type): Tree
-
     def scalaTreeType: Type
     def protoValueType: Type
 
-    def tree: Option[Tree] =
-      Some {
-        scalaTreeType match {
-          case t: Type if isOption(t) ⇒
-            optTree(resolveFieldType(caseClassType, t))
-          case t: Type if isIterable(t) ⇒
-            seqTree(resolveFieldType(caseClassType, t))
-          case t: Type if isMap(t) ⇒
-            mapTree(resolveFieldType(caseClassType, t))
-          case t: Type ⇒
-            val resolveType = resolveFieldType(caseClassType, t)
-            defaultTree(resolveType)
-        }
-      }
+    def resolvedCaseClassFieldType: Type = resolveFieldType(caseClassType, scalaTreeType)
+
+    def tree: Option[Tree]
   }
 
+  // Convert expr (`scalaTree` in this class) to protobuf value
   class ToProtoProcessor(
       scalaTree: Tree,
       override val scalaTreeType: Type,
@@ -73,7 +62,7 @@ class ProtoScalableMacro(val c: whitebox.Context) {
 
     override def protoValueType: Type = protoValueSetterType
 
-    override def optTree(optFieldType: Type): c.universe.Tree = {
+    def optTree(optFieldType: Type): c.universe.Tree = {
       val tree = if (isIterable(protoValueType)) {
         seqTree(optFieldType)
       } else if (isMap(protoValueType)) {
@@ -84,33 +73,48 @@ class ProtoScalableMacro(val c: whitebox.Context) {
       If(q"$scalaTree.isDefined", tree, EmptyTree)
     }
 
-    override def seqTree(iterableType: Type): c.universe.Tree = {
+    def seqTree(iterableType: Type): c.universe.Tree = {
       val listType = builderType.member(addAllMethodName).asMethod.paramLists.head.head.typeSignature
       val valueTree = toProto(iterableType, listType)
       q"${builderIdent}.$addAllMethodName($valueTree)"
     }
 
-    override def mapTree(mapType: Type): c.universe.Tree = {
+    def mapTree(mapType: Type): c.universe.Tree = {
       val putAllMapType = builderType.member(putAllMethodName).asMethod.paramLists.head.head.typeSignature
       val valueTree = toProto(mapType, putAllMapType)
       q"${builderIdent}.$putAllMethodName($valueTree)"
     }
 
-    override def defaultTree(fieldType: Type): c.universe.Tree = {
+    def defaultTree(fieldType: Type): c.universe.Tree = {
       val valueTree = toProto(fieldType, protoValueType)
       q"${builderIdent}.$setField(${valueTree})"
     }
 
     override def tree: Option[Tree] = {
-      if (scalaTreeType <:< typeOf[AnyRef]) {
-        val notNullCondition = q"$scalaTree ne null"
-        super.tree.map(If(notNullCondition, _, EmptyTree))
+      if (protoValueType == NoType) {
+        None
       } else {
-        super.tree
+        val _tree = if (isOption(scalaTreeType)) {
+          optTree(resolvedCaseClassFieldType)
+        } else if (isIterable(protoValueType)) {
+          seqTree(resolvedCaseClassFieldType)
+        } else if (isMap(protoValueType)) {
+          mapTree(resolvedCaseClassFieldType)
+        } else {
+          defaultTree(resolvedCaseClassFieldType)
+        }
+
+        if (scalaTreeType <:< typeOf[AnyRef]) {
+          val notNullCondition = q"$scalaTree ne null"
+          Some(If(notNullCondition, _tree, EmptyTree))
+        } else {
+          Some(_tree)
+        }
       }
     }
   }
 
+  // Convert expr (`protoValueTree` in this class) to case class filed value
   case class ToScalaProcessor(caseClassSelector: MethodSymbol, protoValueTree: Tree, protoValueType: Type, caseClassType: Type, protoType: Type)
       extends AbstractToScalaProcessor
 
@@ -130,17 +134,25 @@ class ProtoScalableMacro(val c: whitebox.Context) {
       }
     }
 
-    override def optTree(optType: Type): c.universe.Tree = defaultTree(optType)
+    def optTree(optType: Type): c.universe.Tree = defaultTree(optType)
 
-    override def seqTree(iterableType: Type): Tree = defaultTree(iterableType)
-
-    override def mapTree(mapType: c.universe.Type): Tree = defaultTree(mapType)
-
-    override def defaultTree(fieldType: Type): Tree = {
+    def defaultTree(fieldType: Type): Tree = {
       q"$caseClassSelector = ${toScala(fieldType, protoValueType, protoValueTree)}"
     }
+
+    override def tree: Option[Tree] =
+      if (protoValueType == NoType) {
+        None
+      } else {
+        if (isOption(scalaTreeType)) {
+          Some(optTree(resolvedCaseClassFieldType))
+        } else {
+          Some(defaultTree(resolvedCaseClassFieldType))
+        }
+      }
   }
 
+  // Contain some methods and vals to analyze Protobuf fields
   trait ProtoFieldAnalyst extends Processor {
     def protoFieldName: String
 
@@ -195,12 +207,13 @@ class ProtoScalableMacro(val c: whitebox.Context) {
       }
     }
 
-    override def tree: Option[Tree] = if (protoValueType != NoType) super.tree else None
   }
 
+  // Convert scala clase class field value to protobuf value
   case class ToProtoFieldProcessor(accessor: MethodSymbol, override val caseClassType: Type, override val protoType: Type)
       extends ToProtoProcessor(q"$entityIdent.$accessor", accessor.returnType, caseClassType, protoType, accessor.name.toString.capitalize)
 
+  // Convert protobuf value to case class filed value
   case class ToScalaFieldProcessor(accessor: MethodSymbol, override val caseClassType: Type, override val protoType: Type)
       extends AbstractToScalaProcessor
       with ProtoFieldAnalyst {
