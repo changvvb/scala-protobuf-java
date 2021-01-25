@@ -22,11 +22,12 @@ message PBTestMessage {
     google.protobuf.Timestamp time_opt = 14;
     repeated int32 int_array = 15;
     repeated string string_array = 16;
-    repeated double seq = 17;
-    map<string,string> string_string_k_v = 18;
-    map<int64,string> long_string_k_v = 19;
-    map<string, int32> string_int_k_v = 20;
-    map<int64,int32> long_int_k_v = 21;
+    repeated PBPerson person_array = 17;
+    repeated double seq = 18;
+    map<string,string> string_string_k_v = 19;
+    map<int64,string> long_string_k_v = 20;
+    map<string, int32> string_int_k_v = 21;
+    map<int64,int32> long_int_k_v = 22;
 }
 
 message PBPerson {

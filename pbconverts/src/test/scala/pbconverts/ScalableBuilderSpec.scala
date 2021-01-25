@@ -18,6 +18,15 @@ class ScalableBuilderSpec extends AnyFunSuite {
 
     assert(testMessage2.intArray.sameElements(testMessage.intArray))
     assert(testMessage2.stringArray.sameElements(testMessage.stringArray))
-    assert(testMessage == testMessage2.copy(intOpt = testMessage2.intOpt.map(_ - 1), intArray = testMessage.intArray, stringArray = testMessage.stringArray))
+    assert(testMessage2.personArray.sameElements(testMessage.personArray))
+
+    assert(
+      testMessage == testMessage2.copy(
+        intOpt = testMessage2.intOpt.map(_ - 1),
+        intArray = testMessage.intArray,
+        stringArray = testMessage.stringArray,
+        personArray = testMessage.personArray
+      )
+    )
   }
 }
