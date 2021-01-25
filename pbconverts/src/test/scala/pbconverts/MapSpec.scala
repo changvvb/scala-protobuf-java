@@ -2,18 +2,18 @@ package pbconverts
 
 import com.google.protobuf.ByteString
 import org.scalatest.funsuite.AnyFunSuite
-import pbconverts.ConversionTest.{PBTestBytes, TestMessageDto}
+import pbconverts.ConversionTest.{PBTestBytes, PBTestMessage}
 
 class MapSpec extends AnyFunSuite {
   test("test map") {
     val testMessage = TestMessage.default
 
-    val testMessageDto: TestMessageDto = Protoable[TestMessage, TestMessageDto].toProto(testMessage)
-    assert(testMessageDto.getIntValue == testMessage.intValue)
-    assert(testMessageDto.getLongIntKVOrThrow(1L) == 1)
-    assert(testMessageDto.getLongStringKVOrThrow(1L) == "string1")
-    assert(testMessageDto.getStringIntKVOrThrow("string1") == 1)
-    assert(testMessageDto.getStringStringKVOrThrow("string1") == "string1")
+    val pbTestMessage: PBTestMessage = Protoable[TestMessage, PBTestMessage].toProto(testMessage)
+    assert(pbTestMessage.getIntValue == testMessage.intValue)
+    assert(pbTestMessage.getLongIntKVOrThrow(1L) == 1)
+    assert(pbTestMessage.getLongStringKVOrThrow(1L) == "string1")
+    assert(pbTestMessage.getStringIntKVOrThrow("string1") == 1)
+    assert(pbTestMessage.getStringStringKVOrThrow("string1") == "string1")
   }
 
   case class TestBytes(m: Map[String, Int])
