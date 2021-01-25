@@ -10,7 +10,6 @@ class ProtoableBuilderSpec extends AnyFunSuite {
   }
 
   def assertTestMessage(testMessage: TestMessage) = {
-    val testMessage = TestMessage.default
     val pbTestMessage: PBTestMessage = ProtoableBuilder[TestMessage, PBTestMessage]
       .setField(_.getIntValue, _.intValue + 1)
       .build
@@ -20,6 +19,16 @@ class ProtoableBuilderSpec extends AnyFunSuite {
     val testMessage2 = Scalable[TestMessage, PBTestMessage].toScala(pbTestMessage)
 
     assert(testMessage2.intArray.sameElements(testMessage.intArray))
-    assert(testMessage == testMessage2.copy(intValue = testMessage2.intValue - 1, intArray = testMessage.intArray, stringArray = testMessage.stringArray))
+    assert(testMessage2.stringArray.sameElements(testMessage.stringArray))
+    assert(testMessage2.personArray.sameElements(testMessage.personArray))
+
+    assert(
+      testMessage == testMessage2.copy(
+        intValue = testMessage2.intValue - 1,
+        intArray = testMessage.intArray,
+        stringArray = testMessage.stringArray,
+        personArray = testMessage.personArray
+      )
+    )
   }
 }
