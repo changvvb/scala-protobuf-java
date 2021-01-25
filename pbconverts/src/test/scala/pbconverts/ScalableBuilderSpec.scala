@@ -1,7 +1,7 @@
 package pbconverts
 
 import org.scalatest.funsuite.AnyFunSuite
-import pbconverts.ConversionTest.TestMessageDto
+import pbconverts.ConversionTest.PBTestMessage
 
 class ScalableBuilderSpec extends AnyFunSuite {
   test("test ScalableBuilder") {
@@ -10,11 +10,11 @@ class ScalableBuilderSpec extends AnyFunSuite {
   }
 
   def assertTestMessage(testMessage: TestMessage) = {
-    val testMessageDto = Protoable[TestMessage, TestMessageDto].toProto(testMessage)
-    val testMessage2 = ScalableBuilder[TestMessage, TestMessageDto]
+    val pbTestMessage = Protoable[TestMessage, PBTestMessage].toProto(testMessage)
+    val testMessage2 = ScalableBuilder[TestMessage, PBTestMessage]
       .setField(_.intOpt, m => if (m.hasIntOpt) Some(m.getIntOpt.getValue + 1) else None)
       .build
-      .toScala(testMessageDto)
+      .toScala(pbTestMessage)
 
     assert(testMessage2.intArray.sameElements(testMessage.intArray))
     assert(testMessage2.stringArray.sameElements(testMessage.stringArray))

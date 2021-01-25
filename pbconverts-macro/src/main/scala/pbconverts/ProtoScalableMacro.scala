@@ -234,43 +234,28 @@ class ProtoScalableMacro(val c: whitebox.Context) {
     }
   }
 
-  private[this] def resolveFieldType(entityType: Type, originType: Type): Type = {
-    val types = (entityType.typeSymbol.asType.typeParams zip entityType.typeArgs).toMap
-    def resolve(tpe: Type): Type = {
-      if (tpe.typeArgs.isEmpty) {
-        types.getOrElse(tpe.typeSymbol, tpe)
-      } else {
-        appliedType(tpe.typeConstructor, tpe.typeArgs.map(resolve))
-      }
-    }
-    originType match {
-      case t: Type if isOption(t) ⇒
-        appliedType(typeOf[Option[_]].typeConstructor, resolve(t.typeArgs.head))
-      case t: Type if isIterable(t) ⇒
-        appliedType(t.typeConstructor, resolve(t.typeArgs.head))
-      case t: Type if isMap(t) ⇒
-        appliedType(t.typeConstructor, resolve(t.typeArgs.head), resolve(t.typeArgs.last))
-      case t: Type ⇒
-        resolve(t)
-    }
+  private[this] def resolveFieldType(entityType: Type, originType: Type): Type =
+    originType.asSeenFrom(entityType, entityType.typeSymbol.asClass)
+
+  private[this] def resolveType[T: WeakTypeTag]: Type = {
+    val tpe = weakTypeOf[T]
+    tpe.dealias
   }
 
-  private[this] def getCaseAccessors[T: WeakTypeTag]: Seq[MethodSymbol] = {
-    weakTypeOf[T].members.collect { case m: MethodSymbol if m.isCaseAccessor ⇒ m }.toSeq.reverse
+  private[this] def getCaseAccessors(caseClassType: Type): Seq[MethodSymbol] = {
+    caseClassType.members.collect { case m: MethodSymbol if m.isCaseAccessor ⇒ m }.toSeq.reverse
   }
 
-  private[this] def defaultProtoableFieldConvertTrees[T: WeakTypeTag, M: WeakTypeTag]: Map[String, Tree] = {
-    getCaseAccessors[T].flatMap { a ⇒
-      val p = ToProtoFieldProcessor(a, weakTypeOf[T], weakTypeOf[M])
+  private[this] def defaultProtoableFieldConvertTrees(caseClassType: Type, protoType: Type): Map[String, Tree] = {
+    getCaseAccessors(caseClassType).flatMap { a ⇒
+      val p = ToProtoFieldProcessor(a, caseClassType, protoType)
       p.tree.map(p.protoFieldName -> _)
     }.toMap
   }
 
-  private[this] def protoableBody[T: WeakTypeTag, M: WeakTypeTag](protoableFieldConvertTrees: Iterable[Tree]): Tree = {
-    val entityType = weakTypeOf[T]
-    val protoType = weakTypeOf[M]
+  private[this] def protoableBody(caseClassType: Type, protoType: Type, protoableFieldConvertTrees: Iterable[Tree]): Tree = {
     q"""
-      override def toProto(${entityIdent.name.toTermName}: $entityType): $protoType = {
+      override def toProto(${entityIdent.name.toTermName}: $caseClassType): $protoType = {
         val ${builderIdent} = ${protoType.typeSymbol.companion}.newBuilder()
         ..$protoableFieldConvertTrees
         $builderIdent.build()
@@ -278,16 +263,14 @@ class ProtoScalableMacro(val c: whitebox.Context) {
      """
   }
 
-  private def defalutScalableFieldConvertTrees[T: WeakTypeTag, M: WeakTypeTag]: Map[String, Tree] = {
-    getCaseAccessors[T].flatMap(accessor ⇒ ToScalaFieldProcessor(accessor, weakTypeOf[T], weakTypeOf[M]).tree.map(accessor.name.toString -> _)).toMap
+  private def defalutScalableFieldConvertTrees(caseClassType: Type, protoType: Type): Map[String, Tree] = {
+    getCaseAccessors(caseClassType).flatMap(accessor ⇒ ToScalaFieldProcessor(accessor, caseClassType, protoType).tree.map(accessor.name.toString -> _)).toMap
   }
 
-  private def scalableBody[T: WeakTypeTag, M: WeakTypeTag](scalableFieldConvertTrees: Iterable[Tree]): Tree = {
-    val entityType = weakTypeOf[T]
-    val protoType = weakTypeOf[M]
+  private def scalableBody(caseClassType: Type, protoType: Type, scalableFieldConvertTrees: Iterable[Tree]): Tree = {
     q"""
-      override def toScala(${protoIdent.name.toTermName} :$protoType): $entityType = {
-        new ${entityType.typeSymbol} (
+      override def toScala(${protoIdent.name.toTermName} :$protoType): $caseClassType = {
+        new ${caseClassType.typeSymbol} (
            ..${scalableFieldConvertTrees}
         )
       }
@@ -295,37 +278,46 @@ class ProtoScalableMacro(val c: whitebox.Context) {
   }
 
   def scalasImpl[T: WeakTypeTag, M: WeakTypeTag]: Tree = {
-    scalasImpl[T, M](defalutScalableFieldConvertTrees[T, M].values, Nil)
+    val caseClassType = resolveType[T]
+    val protoType = resolveType[M]
+    val scalableFieldConvertTrees = defalutScalableFieldConvertTrees(caseClassType, protoType).values
+    scalasImpl(caseClassType, protoType, scalableFieldConvertTrees, Nil)
   }
 
-  private[this] def scalasImpl[T: WeakTypeTag, M: WeakTypeTag](scalableFieldConvertTrees: Iterable[Tree], perTrees: Iterable[Tree]): Tree = {
+  private[this] def scalasImpl(caseClassType: Type, protoType: Type, scalableFieldConvertTrees: Iterable[Tree], perTrees: Iterable[Tree]): Tree = {
     q"""
        ..$perTrees
-       new $packageName.Scalable[${weakTypeOf[T]}, ${weakTypeOf[M]}] { ${scalableBody[T, M](scalableFieldConvertTrees)} }
+       new $packageName.Scalable[$caseClassType, $protoType] { ${scalableBody(caseClassType, protoType, scalableFieldConvertTrees)} }
     """
   }
 
   def protosImpl[T: WeakTypeTag, M: WeakTypeTag]: Tree = {
-    protosImpl[T, M](defaultProtoableFieldConvertTrees[T, M].values, Nil)
+    val caseClassType = resolveType[T]
+    val protoType = resolveType[M]
+    protosImpl(caseClassType, protoType, defaultProtoableFieldConvertTrees(caseClassType, protoType).values, Nil)
   }
 
-  private[this] def protosImpl[T: WeakTypeTag, M: WeakTypeTag](protoableFieldConvertTrees: Iterable[Tree], perTrees: Iterable[Tree]): Tree = {
+  private[this] def protosImpl(caseClassType: Type, protoType: Type, protoableFieldConvertTrees: Iterable[Tree], perTrees: Iterable[Tree]): Tree = {
     q"""
        ..$perTrees
-       new $packageName.Protoable[${weakTypeOf[T]},${weakTypeOf[M]}] { ${protoableBody[T, M](protoableFieldConvertTrees)} }
+       new $packageName.Protoable[$caseClassType,$protoType] { ${protoableBody(caseClassType, protoType, protoableFieldConvertTrees)} }
     """
   }
 
   def convertsImpl[T: WeakTypeTag, M: WeakTypeTag]: Tree = {
+    val caseClassType = resolveType[T]
+    val protoType = resolveType[M]
     q"""
-      new $packageName.ProtoScalable[${weakTypeOf[T]}, ${weakTypeOf[M]}] {
-        ${scalableBody[T, M](defalutScalableFieldConvertTrees[T, M].values)}
-        ${protoableBody[T, M](defaultProtoableFieldConvertTrees[T, M].values)}
+      new $packageName.ProtoScalable[${resolveType[T]}, ${resolveType[M]}] {
+        ${scalableBody(caseClassType, protoType, defalutScalableFieldConvertTrees(caseClassType, protoType).values)}
+        ${protoableBody(caseClassType, protoType, defaultProtoableFieldConvertTrees(caseClassType, protoType).values)}
       }
     """
   }
 
   def buildProtoableImpl[T: WeakTypeTag, M: WeakTypeTag]: Tree = {
+    val caseClassType = resolveType[T]
+    val protoType = resolveType[M]
     val customTrees = MacroCache.builderFunctionTrees.getOrElse(getBuilderId(), mutable.Map.empty)
     val (fixedCustomTrees, preTrees) = customTrees.map {
       case (key, tree) ⇒
@@ -333,21 +325,24 @@ class ProtoScalableMacro(val c: whitebox.Context) {
           case buildFunction: Function ⇒
             val functionName = TermName("builderFunction$" + MacroCache.getIdentityId)
             val fromType = buildFunction.tpe.typeArgs.last // buildFunction 的返回值
-            val buildExpr = new ToProtoProcessor(q"$functionName($entityIdent)", fromType, weakTypeOf[T], weakTypeOf[M], key).tree.get
+            val buildExpr = new ToProtoProcessor(q"$functionName($entityIdent)", fromType, caseClassType, protoType, key).tree.get
             (key -> buildExpr) -> q"val $functionName = $buildFunction"
           case value: Tree ⇒ // setFieldValue
             val identity = TermName("identity$" + MacroCache.getIdentityId)
-            val buildExpr = new ToProtoProcessor(q"$identity", value.tpe, weakTypeOf[T], weakTypeOf[M], key).tree.get
+            val buildExpr = new ToProtoProcessor(q"$identity", value.tpe, caseClassType, protoType, key).tree.get
             (key -> buildExpr) -> q"val $identity = $value"
         }
     }.unzip
-    protosImpl[T, M]((defaultProtoableFieldConvertTrees[T, M] ++ fixedCustomTrees.toMap).values, preTrees)
+    val protoableFieldConvertTrees = (defaultProtoableFieldConvertTrees(caseClassType, protoType) ++ fixedCustomTrees.toMap).values
+    protosImpl(caseClassType, protoType, protoableFieldConvertTrees, preTrees)
   }
 
   def buildScalableImpl[T: WeakTypeTag, M: WeakTypeTag]: Tree = {
+    val caseClassType = resolveType[T]
+    val protoType = resolveType[M]
     val builderId = getBuilderId()
     val customTrees = MacroCache.builderFunctionTrees.getOrElse(builderId, mutable.Map.empty)
-    val entityType = weakTypeOf[T]
+    val entityType = resolveType[T]
 
     val (fixedCustomTrees, preTrees) = customTrees.map {
       case (key, tree) ⇒
@@ -355,16 +350,17 @@ class ProtoScalableMacro(val c: whitebox.Context) {
         tree match {
           case buildFunction: Function ⇒ // setField
             val functionName = TermName("builderFunction$" + MacroCache.getIdentityId)
-            val expr = new ToScalaProcessor(selector.asMethod, q"$functionName($protoIdent)", buildFunction.body.tpe, weakTypeOf[T], weakTypeOf[M]).tree.get
+            val expr = new ToScalaProcessor(selector.asMethod, q"$functionName($protoIdent)", buildFunction.body.tpe, resolveType[T], resolveType[M]).tree.get
             (key -> expr) -> q"val $functionName = $buildFunction"
           case value: Tree ⇒ // setFieldValue
             val identity = TermName("identity$" + MacroCache.getIdentityId)
-            val expr = new ToScalaProcessor(selector.asMethod, q"$identity", value.tpe, weakTypeOf[T], weakTypeOf[M]).tree.get
+            val expr = new ToScalaProcessor(selector.asMethod, q"$identity", value.tpe, resolveType[T], resolveType[M]).tree.get
             (key -> expr) -> q"val $identity = $value"
         }
     }.unzip
 
-    scalasImpl[T, M]((defalutScalableFieldConvertTrees[T, M] ++ fixedCustomTrees.toMap).values, preTrees)
+    val scalableFieldConvertTrees = (defalutScalableFieldConvertTrees(caseClassType, protoType) ++ fixedCustomTrees.toMap).values
+    scalasImpl(caseClassType, protoType, scalableFieldConvertTrees, preTrees)
   }
 
   def setScalaFieldImpl[T: WeakTypeTag, M: WeakTypeTag, TF: WeakTypeTag, MF: WeakTypeTag](scalaField: Tree, value: Tree): Tree = {
@@ -401,7 +397,7 @@ class ProtoScalableMacro(val c: whitebox.Context) {
   def scalableBuilderApply[T: WeakTypeTag, M: WeakTypeTag]: Tree = {
     val className = TypeName(annoBuilderPrefix + MacroCache.getBuilderId)
     q"""
-       class $className extends $packageName.ScalableBuilder[${weakTypeOf[T]}, ${weakTypeOf[M]}]
+       class $className extends $packageName.ScalableBuilder[${resolveType[T]}, ${resolveType[M]}]
        new $className
      """
   }
@@ -409,7 +405,7 @@ class ProtoScalableMacro(val c: whitebox.Context) {
   def protoableBuilderApply[T: WeakTypeTag, M: WeakTypeTag]: Tree = {
     val className = TypeName(annoBuilderPrefix + MacroCache.getBuilderId)
     q"""
-       class $className extends $packageName.ProtoableBuilder[${weakTypeOf[T]}, ${weakTypeOf[M]}]
+       class $className extends $packageName.ProtoableBuilder[${resolveType[T]}, ${resolveType[M]}]
        new $className
      """
   }

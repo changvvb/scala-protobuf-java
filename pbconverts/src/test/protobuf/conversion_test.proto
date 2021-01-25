@@ -5,7 +5,7 @@ option java_package = "pbconverts";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
 
-message TestMessageDto {
+message PBTestMessage {
     int32 int_value = 1;
     int64 long_value = 2;
     float float_value = 3;
@@ -29,7 +29,7 @@ message TestMessageDto {
     map<int64,int32> long_int_k_v = 21;
 }
 
-message PersonDto {
+message PBPerson {
     int64 id = 1;
     string name = 2;
     google.protobuf.StringValue phone = 3;
@@ -38,4 +38,12 @@ message PersonDto {
 
 message PBTestBytes {
     bytes test_bytes = 1;
+}
+
+message IntMessage {
+    int32 value = 1;
+}
+
+message StringMessage {
+    string value = 1;
 }
