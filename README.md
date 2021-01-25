@@ -19,7 +19,7 @@ maven
 <dependency>
   <groupId>com.github.changvvb</groupId>
   <artifactId>scala-protobuf-java_2.13</artifactId>
-  <version>0.1.1</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
