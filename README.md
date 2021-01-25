@@ -12,7 +12,7 @@
 ### Import to your project
 sbt (for `2.12` and `2.13`. If you need more, just submit a issue or PR)
 ```scala
-libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.1.1"
+libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.2.0"
 ```
 maven
 ```xml
