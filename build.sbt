@@ -1,25 +1,26 @@
 import sbt._
 
-lazy val scala213 = "2.13.4"
-lazy val scala212 = "2.12.12"
+//lazy val scala213 = "2.13.4"
+//lazy val scala212 = "2.12.12"
+lazy val scala3 = "3.0.0-RC2"
 
-lazy val supportedScalaVersions = List(scala212, scala213)
+//lazy val supportedScalaVersions = List(scala212, scala213)
 
 val commonSettings = Seq(
-    scalaVersion := scala213,
+    scalaVersion := scala3,
     scalacOptions += "-language:experimental.macros",
     organization := "com.github.changvvb",
-    crossScalaVersions := supportedScalaVersions,
+//    crossScalaVersions := supportedScalaVersions,
     releasePublishArtifactsAction := PgpKeys.publishSigned.value
 )
 
 lazy val `scala-protobuf-java-macro` = project.in(file("pbconverts-macro"))
-  .settings(libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value))
+//  .settings(libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value))
   .settings(commonSettings)
   .enablePlugins(ProtobufPlugin)
 
 lazy val `scala-protobuf-java` = project.in(file("pbconverts"))
-  .settings(libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test")
+  .settings(libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.7" % "test")
   .settings(commonSettings)
   .dependsOn(`scala-protobuf-java-macro`)
   .enablePlugins(ProtobufTestPlugin)
