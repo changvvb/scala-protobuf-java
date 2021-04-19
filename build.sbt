@@ -29,7 +29,7 @@ lazy val root = project.in(file(".")).withId("root")
   .aggregate(`scala-protobuf-java`, `scala-protobuf-java-macro`)
   .settings(publishArtifact := false)
 
-scalafmtOnCompile in ThisBuild := true
+//scalafmtOnCompile in ThisBuild := true
 
 // publish
 

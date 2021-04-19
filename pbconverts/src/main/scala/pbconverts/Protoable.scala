@@ -1,8 +1,9 @@
 package pbconverts
 
-import java.time.ZonedDateTime
+import annotation.targetName
 
-import com.google.protobuf.{BoolValue, DoubleValue, FloatValue, Int32Value, Int64Value, StringValue, Timestamp}
+import java.time.ZonedDateTime
+import com.google.protobuf.{BoolValue, DoubleValue, FloatValue, GeneratedMessageV3, Int32Value, Int64Value, Message, StringValue, Timestamp}
 
 import scala.collection.JavaConverters._
 
@@ -12,72 +13,68 @@ trait Protoable[-T, +M] {
 
 object Protoable {
 
-  def apply[T <: Product, M]: Protoable[T, M] = ??? // macro ProtoScalableMacro.protosImpl[T, M]
+  inline def apply[T <: Product, M <: GeneratedMessageV3]: Protoable[T, M] = {
+    ProtoScalableMacro.protoable[T, M]
+  }
 
   def apply[T, M](f: T ⇒ M): Protoable[T, M] =
     new Protoable[T, M] {
       override def toProto(entity: T): M = f(entity)
     }
 
-  implicit val javaDoubleProtoable: Protoable[Double, java.lang.Double] = Protoable[Double, java.lang.Double](_.toDouble)
-  implicit val javaFloatProtoable: Protoable[Float, java.lang.Float] = Protoable[Float, java.lang.Float](_.toFloat)
-  implicit val javaIntergerProtoable: Protoable[Int, java.lang.Integer] = Protoable[Int, java.lang.Integer](_.toInt)
-  implicit val javaLongProtoable: Protoable[Long, java.lang.Long] = Protoable[Long, java.lang.Long](_.toLong)
-//  implicit val javaCharacterProtoable = Protoable[Char, java.lang.Character](_.toChar)
-//  implicit val javaByteProtoable = Protoable[Byte, java.lang.Byte](_.toByte)
-//
-//  implicit val stringValueProtoable = Protoable[String, StringValue](StringValue.of)
-//  implicit val doubleValueProtoable = Protoable[Double, DoubleValue](DoubleValue.of)
-//  implicit val floatValueProtoable = Protoable[Float, FloatValue](FloatValue.of)
-//  implicit val int32ValueProtoable = Protoable[Int, Int32Value](Int32Value.of)
-//  implicit val boolValueProtoable = Protoable[Boolean, BoolValue](BoolValue.of)
-//  implicit val int64ValueProtoable = Protoable[Long, Int64Value](Int64Value.of)
+  given Protoable[Double, java.lang.Double] = Protoable(_.toDouble)
+  given Protoable[Float, java.lang.Float] = Protoable(_.toFloat)
+  given Protoable[Int, java.lang.Integer] = Protoable(_.toInt)
+  given Protoable[Long, java.lang.Long] = Protoable(_.toLong)
+  given Protoable[Char, java.lang.Character] = Protoable(_.toChar)
+  given Protoable[Byte, java.lang.Byte] = Protoable(_.toByte)
 
-//  implicit val stringValueProtoable = Protoable[String, StringValue](StringValue.of)
-//  implicit val doubleValueProtoable = Protoable[Double, DoubleValue](DoubleValue.of)
-//  implicit val floatValueProtoable = Protoable[Float, FloatValue](FloatValue.of)
-//  implicit val int32ValueProtoable = Protoable[Int, Int32Value](Int32Value.of)
-//  implicit val boolValueProtoable = Protoable[Boolean, BoolValue](BoolValue.of)
-//  implicit val int64ValueProtoable = Protoable[Long, Int64Value](Int64Value.of)
-//
-//  implicit val zonedDateTimeProtoable = Protoable[ZonedDateTime, Timestamp] { entity ⇒
-//    Timestamp.newBuilder().setSeconds(entity.toEpochSecond).setNanos(entity.getNano).build()
-//  }
+  given Protoable[String, StringValue]= Protoable(StringValue.of)
+  given Protoable[Double, DoubleValue]= Protoable(DoubleValue.of)
+  given Protoable[Float, FloatValue]= Protoable(FloatValue.of)
+  given Protoable[Int, Int32Value]= Protoable(Int32Value.of)
+  given Protoable[Boolean, BoolValue]= Protoable(BoolValue.of)
+  given Protoable[Long, Int64Value]= Protoable(Int64Value.of)
 
-  implicit def iterableProtoable[T, M](implicit protoable: Protoable[T, M]): Protoable[scala.Iterable[T], java.util.List[M]] =
+  given Protoable[ZonedDateTime, Timestamp] = Protoable { entity ⇒
+    Timestamp.newBuilder().setSeconds(entity.toEpochSecond).setNanos(entity.getNano).build()
+  }
+
+   given [T, M](using protoable: Protoable[T, M]): Protoable[scala.Iterable[T], java.util.List[M]] =
     Protoable[scala.Iterable[T], java.util.List[M]] { entity ⇒
       entity.toList.map(protoable.toProto).asJava
     }
 
-  implicit def iterableProtoable2[T]: Protoable[scala.Iterable[T], java.util.List[T]] =
+  given [T]: Protoable[scala.Iterable[T], java.util.List[T]] =
     Protoable[scala.Iterable[T], java.util.List[T]] { entity ⇒ entity.toList.asJava }
 
-  implicit def arrayProtoable[T]: Protoable[Array[T], java.util.List[T]] =
+  given[T]: Protoable[Array[T], java.util.List[T]] =
     Protoable[Array[T], java.util.List[T]] { entity ⇒ entity.toList.asJava }
 
-  implicit def arrayProtoable2[T, M](implicit protoable: Protoable[T, M]): Protoable[Array[T], java.lang.Iterable[M]] =
+  given[T, M](using protoable: Protoable[T, M]): Protoable[Array[T], java.lang.Iterable[M]] =
     Protoable[Array[T], java.util.List[M]] { entity ⇒
       entity.toList.map(protoable.toProto).asJava
     }
 
-  implicit def optProtoable[F, Target <: Any](implicit protoable: Protoable[F, Target]): Protoable[Option[F], Target] =
+  given[F, Target <: Any](using protoable: Protoable[F, Target]): Protoable[Option[F], Target] =
     Protoable[Option[F], Target] { (entity: Option[F]) ⇒
       entity.map(protoable.toProto).getOrElse(None.orNull.asInstanceOf[Target])
     }
 
-  implicit def optProtoable2[T]: Protoable[Option[T], T] =
+  given[T]: Protoable[Option[T], T] =
     Protoable[Option[T], T] { (opt: Option[T]) => opt.getOrElse(None.orNull.asInstanceOf[T]) }
 
-  implicit def mapProtoable1[K, V]: Protoable[Map[K, V], java.util.Map[K, V]] =
+  given[K, V]: Protoable[Map[K, V], java.util.Map[K, V]] =
     Protoable[Map[K, V], java.util.Map[K, V]] { m ⇒ m.asJava }
 
-  implicit def mapProtoable2[K1, K2, V](implicit kProtoable: Protoable[K1, K2]): Protoable[Map[K1, V], java.util.Map[K2, V]] =
+  @targetName("for key mapping")
+  given[K1, K2, V](using kProtoable: Protoable[K1, K2]): Protoable[Map[K1, V], java.util.Map[K2, V]] =
     Protoable[Map[K1, V], java.util.Map[K2, V]] { m ⇒ m.map { case (k, v) ⇒ kProtoable.toProto(k) -> v }.asJava }
 
-  implicit def mapProtoable3[K, V1, V2](implicit vProtoable: Protoable[V1, V2]): Protoable[Map[K, V1], java.util.Map[K, V2]] =
+  given[K, V1, V2](using vProtoable: Protoable[V1, V2]): Protoable[Map[K, V1], java.util.Map[K, V2]] =
     Protoable[Map[K, V1], java.util.Map[K, V2]] { m ⇒ m.map { case (k, v) ⇒ k -> vProtoable.toProto(v) }.asJava }
 
-  implicit def mapProtoable4[K1, K2, V1, V2](implicit
+  given[K1, K2, V1, V2](using
       kProtoable: Protoable[K1, K2],
       vProtoable: Protoable[V1, V2]
   ): Protoable[Map[K1, V1], java.util.Map[K2, V2]] =

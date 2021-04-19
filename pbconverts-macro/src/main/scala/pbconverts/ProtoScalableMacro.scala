@@ -1,14 +1,15 @@
-package pbconverts
-
-import com.google.protobuf.ByteString
-
-import scala.collection.mutable
+//package pbconverts
+//
+//import com.google.protobuf.ByteString
+//
+//import scala.collection.mutable
 //import scala.reflect.macros.whitebox
-
-// scalastyle:off number.of.methods
-//class ProtoScalableMacro(val c: whitebox.Context) {
-//  import c.universe._
-
+//import scala.quoted
+//import _root_.quoted.Expr
+//
+//// scalastyle:off number.of.methods
+//object ProtoScalableMacro {
+//
 //  private[this] def packageName: Tree = q"_root_.pbconverts"
 //  private[this] def builderIdent = Ident(TermName("builder"))
 //  private[this] def entityIdent = Ident(TermName("entity"))
@@ -158,53 +159,56 @@ import scala.collection.mutable
 //
 //    val builderType = getBuilderType(protoType)
 //
-//    def addAllMethodName: TermName = TermName(s"addAll$protoFieldName")
-//    def putAllMethodName: TermName = TermName(s"putAll$protoFieldName")
-//
-//    def addField: TermName = TermName(s"add$protoFieldName")
-//    def putField: TermName = TermName(s"put$protoFieldName")
-//    def setField: TermName = TermName(s"set$protoFieldName")
-//    def getField: TermName = TermName(s"get$protoFieldName")
-//    def getMapField: TermName = TermName(s"get${protoFieldName}Map")
-//    def getListField: TermName = TermName(s"get${protoFieldName}List")
-//    def builderSetter: TermName = if (isIterable(scalaTreeType)) addAllMethodName else setField
+////    def addAllMethodName: TermName = TermName(s"addAll$protoFieldName")
+////    def putAllMethodName: TermName = TermName(s"putAll$protoFieldName")
+////
+////    def addField: TermName = TermName(s"add$protoFieldName")
+////    def putField: TermName = TermName(s"put$protoFieldName")
+////    def setField: TermName = TermName(s"set$protoFieldName")
+////    def getField: TermName = TermName(s"get$protoFieldName")
+////    def getMapField: TermName = TermName(s"get${protoFieldName}Map")
+////    def getListField: TermName = TermName(s"get${protoFieldName}List")
+////    def builderSetter: TermName = if (isIterable(scalaTreeType)) addAllMethodName else setField
 //
 //    val protoValueTree: Tree = {
-//      if (builderType.member(addField) != NoSymbol) { // 有 addXXX 方法，说明 XXX 是一个数组
-//        q"$protoIdent.$getListField"
-//      } else if (builderType.member(putField) != NoSymbol) { // 有 putXXX 方法，说明 XXX 是一个 map
-//        q"$protoIdent.$getMapField"
-//      } else if (builderType.member(setField) != NoSymbol) { // 有 setXXX 方法
-//        q"$protoIdent.$getField"
-//      } else {
-//        q""
-//      }
+////      if (builderType.member(addField) != NoSymbol) { // 有 addXXX 方法，说明 XXX 是一个数组
+////        q"$protoIdent.$getListField"
+////      } else if (builderType.member(putField) != NoSymbol) { // 有 putXXX 方法，说明 XXX 是一个 map
+////        q"$protoIdent.$getMapField"
+////      } else if (builderType.member(setField) != NoSymbol) { // 有 setXXX 方法
+////        q"$protoIdent.$getField"
+////      } else {
+////        q""
+////      }
+//      ???
 //    }
 //
-//    lazy val protoValueSetterType: Type = {
-//      val pbBuilderType = typeOf[com.google.protobuf.Message.Builder]
-//      val setterOpt = if (builderType.member(addField) != NoSymbol) {
-//        Some(builderType.member(addAllMethodName))
-//      } else if (builderType.member(putField) != NoSymbol) {
-//        Some(builderType.member(putAllMethodName))
-//      } else if (builderType.member(setField) != NoSymbol) {
-//        Some(builderType.member(setField))
-//      } else {
-//        None
-//      }
-//      setterOpt.fold(NoType)(_.alternatives.map(_.asMethod.paramLists.head.head.typeSignature).find(t ⇒ !(t <:< pbBuilderType)).get)
+//    lazy val protoValueSetterType: TypeRepr = {
+////      val pbBuilderType = typeOf[com.google.protobuf.Message.Builder]
+////      val setterOpt = if (builderType.member(addField) != NoSymbol) {
+////        Some(builderType.member(addAllMethodName))
+////      } else if (builderType.member(putField) != NoSymbol) {
+////        Some(builderType.member(putAllMethodName))
+////      } else if (builderType.member(setField) != NoSymbol) {
+////        Some(builderType.member(setField))
+////      } else {
+////        None
+////      }
+////      setterOpt.fold(NoType)(_.alternatives.map(_.asMethod.paramLists.head.head.typeSignature).find(t ⇒ !(t <:< pbBuilderType)).get)
+//      ???
 //    }
 //
-//    lazy val protoValueGetterType: Type = {
-//      if (builderType.member(addField) != NoSymbol) { // 有 addXXX 方法，说明 XXX 是一个数组
-//        protoType.member(getListField).typeSignature.resultType
-//      } else if (builderType.member(putField) != NoSymbol) { // 有 putXXX 方法，说明 XXX 是一个 map
-//        protoType.member(getMapField).typeSignature.resultType
-//      } else if (builderType.member(setField) != NoSymbol) { // 有 setXXX 方法
-//        protoType.member(getField).typeSignature.resultType
-//      } else {
-//        NoType
-//      }
+//    lazy val protoValueGetterType: TypeRepr = {
+////      if (builderType.member(addField) != NoSymbol) { // 有 addXXX 方法，说明 XXX 是一个数组
+////        protoType.member(getListField).typeSignature.resultType
+////      } else if (builderType.member(putField) != NoSymbol) { // 有 putXXX 方法，说明 XXX 是一个 map
+////        protoType.member(getMapField).typeSignature.resultType
+////      } else if (builderType.member(setField) != NoSymbol) { // 有 setXXX 方法
+////        protoType.member(getField).typeSignature.resultType
+////      } else {
+////        NoType
+////      }
+//      ???
 //    }
 //
 //  }
@@ -242,25 +246,26 @@ import scala.collection.mutable
 //    tpe.dealias
 //  }
 //
-//  private[this] def getCaseAccessors(caseClassType: Type): Seq[MethodSymbol] = {
+//  private[this] def getCaseAccessors(caseClassType: TypeRepr): Seq[Symbole] = {
 //    caseClassType.members.collect { case m: MethodSymbol if m.isCaseAccessor ⇒ m }.toSeq.reverse
 //  }
 //
-//  private[this] def defaultProtoableFieldConvertTrees(caseClassType: Type, protoType: Type): Map[String, Tree] = {
+//  private[this] def defaultProtoableFieldConvertTrees(caseClassType: TypeRepr, protoType: TypeRepr): Map[String, Tree] = {
 //    getCaseAccessors(caseClassType).flatMap { a ⇒
 //      val p = ToProtoFieldProcessor(a, caseClassType, protoType)
 //      p.tree.map(p.protoFieldName -> _)
 //    }.toMap
 //  }
 //
-//  private[this] def protoableBody(caseClassType: Type, protoType: Type, protoableFieldConvertTrees: Iterable[Tree]): Tree = {
-//    q"""
-//      override def toProto(${entityIdent.name.toTermName}: $caseClassType): $protoType = {
-//        val ${builderIdent} = ${protoType.typeSymbol.companion}.newBuilder()
-//        ..$protoableFieldConvertTrees
-//        $builderIdent.build()
-//      }
-//     """
+//  private[this] def protoableBody(caseClassType: TypeRepr, protoType: TypeRepr, protoableFieldConvertTrees: Iterable[Tree]): Tree = {
+////    q"""
+////      override def toProto(${entityIdent.name.toTermName}: $caseClassType): $protoType = {
+////        val ${builderIdent} = ${protoType.typeSymbol.companion}.newBuilder()
+////        ..$protoableFieldConvertTrees
+////        $builderIdent.build()
+////      }
+////     """
+//    ???
 //  }
 //
 //  private def defalutScalableFieldConvertTrees(caseClassType: Type, protoType: Type): Map[String, Tree] = {
@@ -277,7 +282,7 @@ import scala.collection.mutable
 //     """
 //  }
 //
-//  def scalasImpl[T: WeakTypeTag, M: WeakTypeTag]: Tree = {
+//  def scalasImpl[T, M]: Expr[Scalable] = {
 //    val caseClassType = resolveType[T]
 //    val protoType = resolveType[M]
 //    val scalableFieldConvertTrees = defalutScalableFieldConvertTrees(caseClassType, protoType).values
@@ -413,5 +418,5 @@ import scala.collection.mutable
 //  private[this] def getBuilderId() = {
 //    c.prefix.actualType.toString.replace(annoBuilderPrefix, "").toInt
 //  }
-
+//
 //}
