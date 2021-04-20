@@ -14,29 +14,44 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
   private[this] val protoClassType = quotas.reflect.TypeRepr.of[M](using typeM)
 
   private[this] val protoClassSymbol: quotas.reflect.Symbol = quotas.reflect.TypeReprMethods.classSymbol(protoClassType).get
-  private[this] val protoClassSymbolCompanion = quotas.reflect.SymbolMethods.companionClass(protoClassSymbol)
-  private[this] val builderSymbol = quotas.reflect.SymbolMethods.declaredMethod(protoClassSymbolCompanion)("newBuilder").head
-//  private[this] val newBuilderTree = Apply(builderSymbol.tree.asInstanceOf[Term], List.empty)
-  private[this] val newProtoTree =  New(protoClassSymbol.tree.asInstanceOf[TypeTree]).asExprOf[M]
+  private[this] val protoClassSymbolClass = quotas.reflect.SymbolMethods.companionClass(protoClassSymbol)
+  private[this] val protoClassSymbolModule = quotas.reflect.SymbolMethods.companionModule(protoClassSymbol)
 
+  private val newBuilderMethod = quotas.reflect.SymbolMethods.memberMethod(protoClassSymbolModule)("newBuilder").last
+  private val builderType:TypeRepr = newBuilderMethod.tree.asInstanceOf[DefDef].returnTpt.tpe
+  private val builderClassSymbol:Symbol = builderType.classSymbol.get
+  private val builderBuildMethod = builderType.classSymbol.get.memberMethod("build").head
 
+  private val TypeRef(outer, name) = protoClassType.asInstanceOf[TypeRef]
+  private val protoCompanionIdent = Ident.apply(TermRef.apply(outer, name))
+  private val newBuilderApply = Apply(Select.apply(protoCompanionIdent, newBuilderMethod),List.empty)
+  private def builderBuildeWithTerms(termsBuilder:Ident => List[Term]) = ValDef.let(Symbol.spliceOwner,"builder",newBuilderApply) { ident =>
+    val terms = termsBuilder.apply(ident)
+    Block(terms,Apply(Select(ident,builderBuildMethod),Nil))
 
+  }
 
+//  private val builderBuildExpr = Apply(ident,)
+//  private[this] def packageName  = ???//q"_root_.pbconverts"
+//  private[this] def builderIdent = ???//Ident(TermRef("builder"))
+//  private[this] def entityIdent = ??? //Ident.apply(TermRef(,"entity"))  //Ident(TermRef("entity"))
+//  private[this] def protoIdent = ??? //Ident(TermRef("proto"))
+  private[this] def implicitlyProtoable(entityType: TypeRepr, protoType: TypeRepr):Term = {
+  val target = TypeRepr.of[Protoable].appliedTo(List(entityType,protoType))
+  Implicits.search(target) match {
+    case s: ImplicitSearchSuccess => s.tree
+    case _ =>
+      report.error(s"implicit ${Printer.TypeReprAnsiCode.show(target)} not found")
+      ???
+  }
+}
 
-
-  private val x = quotas.reflect.SymbolMethods.memberMethod(protoClassSymbolCompanion)("newBuilder").head
-  println(x)
-
-  Apply(protoClassSymbol.tree)
-
-
-  private[this] def packageName  = ???//q"_root_.pbconverts"
-  private[this] def builderIdent = ???//Ident(TermRef("builder"))
-  private[this] def entityIdent = ??? //Ident.apply(TermRef(,"entity"))  //Ident(TermRef("entity"))
-  private[this] def protoIdent = ??? //Ident(TermRef("proto"))
-  private[this] def implicitlyProtoable(entityType: TypeRepr, protoType: TypeRepr) = ??? //q"implicitly[$packageName.Protoable[$entityType,$protoType]]"
-
-  private[this] def implicitlyScalable(entityType: TypeRepr, protoType: TypeRepr) = ??? //q"implicitly[$packageName.Scalable[$entityType,$protoType]]"
+  private[this] def implicitlyScalable(entityType: TypeRepr, protoType: TypeRepr):Term = {
+    Implicits.search(TypeApply('{Scalable}.asTerm,List(TypeIdent(entityType.typeSymbol),TypeIdent(protoType.typeSymbol))).tpe) match {
+      case s:ImplicitSearchSuccess => s.tree
+      case _ => ???
+    }
+  } //q"implicitly[$packageName.Scalable[$entityType,$protoType]]"
 
   private[this] def isOption(tpe: TypeRepr): Boolean = {
     tpe <:< TypeRepr.of[Option[_]]
@@ -50,9 +65,7 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
   private[this] def isMap(tpe: TypeRepr): Boolean = tpe <:< TypeRepr.of[Map[_, _]] || tpe <:< TypeRepr.of[java.util.Map[_, _]]
 
   private[this] def getBuilderType(): TypeRepr = {
-//    TypeReprMethods
-//    protoType.companion.member(TermName("newBuilder")).asTerm.alternatives.head.asMethod.returnType
-    ???
+    builderType
   }
 
   private trait Processor {
@@ -67,23 +80,24 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
 
   // Convert expr (`scalaTree` in this class) to protobuf value
   private class ToProtoProcessor(
-      scalaTree: Tree,
+                                  protoBuilderIdent:Ident,
+                                  scalaTree: Term,
       override val scalaTreeType: TypeRepr,
       override val protoFieldName: String
   ) extends ProtoFieldAnalyst {
 
-    private[this] def toProto(t1: TypeRepr, t2: TypeRepr): Tree = {
+    private[this] def toProto(t1: TypeRepr, t2: TypeRepr): Term = {
       if (t1 <:< t2) {
         scalaTree
       } else {
-        ???
-//        q"${implicitlyProtoable(t1, t2)}.toProto($scalaTree)"
+        val toProtoMethod = TypeRepr.of[Protoable[_,_]].typeSymbol.memberMethod("toProto").head
+        Apply(Select(implicitlyProtoable(t1,t2),toProtoMethod),List(scalaTree))
       }
     }
 
-    override def protoValueType: TypeRepr = protoValueSetterType
+    override def protoValueType: TypeRepr = protoValueSetterType.getOrElse(TypeRepr.of[Unit])
 
-    def optTree(optFieldType: TypeRepr): Tree = {
+    def optTree(optFieldType: TypeRepr): Term = {
       val tree = if (isIterable(protoValueType)) {
         seqTree(optFieldType)
       } else if (isMap(protoValueType)) {
@@ -91,33 +105,32 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
       } else {
         defaultTree(optFieldType)
       }
-      ???
+      '{ if(${scalaTree.asExprOf[Option[_]]}.isDefined) ${tree.asExpr} }.asTerm
 //      If(q"$scalaTree.isDefined", tree, EmptyTree)
     }
 
-    def seqTree(iterableType: TypeRepr): Tree = {
-//      val listType = builderType.member(addAllMethodName).asMethod.paramLists.head.head.typeSignature
-//      val valueTree = toProto(iterableType, listType)
-//      q"${builderIdent}.$addAllMethodName($valueTree)"
-      ???
+    def seqTree(iterableType: TypeRepr): Term = {
+      val addAllMethod =  builderClassSymbol.memberMethod(addAllMethodName).last
+      val listType = addAllMethod.tree.asInstanceOf[DefDef].paramss.head.params.head.asInstanceOf[ValDef].tpt.tpe
+      val valueTree = toProto(iterableType, listType)
+      Apply(Select(protoBuilderIdent, addAllMethod), List(valueTree))
     }
 
-    def mapTree(mapType: TypeRepr): Tree = {
-//      val putAllMapType = builderType.member(putAllMethodName).asMethod.paramLists.head.head.typeSignature
-//      val valueTree = toProto(mapType, putAllMapType)
-//      q"${builderIdent}.$putAllMethodName($valueTree)"
-      ???
+    def mapTree(mapType: TypeRepr): Term = {
+      val putAllMethod =  builderClassSymbol.memberMethod(putAllMethodName).head
+      val putAllMapType = putAllMethod.tree.asInstanceOf[DefDef].paramss.head.params.head.asInstanceOf[ValDef].tpt.tpe
+      val valueTree = toProto(mapType, putAllMapType)
+      Apply(Select(protoBuilderIdent, putAllMethod), List(valueTree))
     }
 
-    def defaultTree(fieldType: TypeRepr): Tree = {
-//      val valueTree = toProto(fieldType, protoValueType)
-//      q"${builderIdent}.$setField(${valueTree})"
-      ???
+    def defaultTree(fieldType: TypeRepr): Term = {
+      val valueTree = toProto(fieldType, protoValueType)
+      val setFieldMethod =  builderClassSymbol.memberMethod(setField).last
+      Apply(Select(protoBuilderIdent, setFieldMethod), List(valueTree))
     }
 
-    override def tree: Option[Tree] = {
-//      if (protoValueType == NoType) {
-      if (protoValueType == ???) {
+    override def tree: Option[Term] = {
+      if (protoValueType == TypeRepr.of[Unit]) {
           None
       } else {
         val _tree = if (isOption(scalaTreeType)) {
@@ -131,9 +144,9 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
         }
 
         if (scalaTreeType <:< TypeRepr.of[AnyRef]) {
-//          val notNullCondition = q"$scalaTree ne null"
-//          Some(If(notNullCondition, _tree, EmptyTree))
-          ???
+           Some('{
+            if(${scalaTree.asExprOf[AnyRef]} ne null) ${_tree.asExpr}
+          }.asTerm)
         } else {
           Some(_tree)
         }
@@ -186,21 +199,20 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
   private trait ProtoFieldAnalyst extends Processor {
     def protoFieldName: String
 
-    val builderType = getBuilderType()
+    def addAllMethodName: String = s"addAll$protoFieldName"
+    def putAllMethodName: String = s"putAll$protoFieldName"
+
+    def addField: String = s"add$protoFieldName"
+    def putField: String = s"put$protoFieldName"
+    def setField: String = s"set$protoFieldName"
+    def getField: String = s"get$protoFieldName"
+    def getMapField: String = s"get${protoFieldName}Map"
+    def getListField: String = s"get${protoFieldName}List"
+    def builderSetter: String = if (isIterable(scalaTreeType)) addAllMethodName else setField
+
+    def protoValueTree: Tree = {
 
 
-    def addAllMethodName: ByName = ???//ByName(s"addAll$protoFieldName")
-    def putAllMethodName: ByName = ???//ByName(s"putAll$protoFieldName")
-
-    def addField: ByName = ???//TermName(s"add$protoFieldName")
-    def putField: ByName = ???//TermName(s"put$protoFieldName")
-    def setField: ByName = ???//TermName(s"set$protoFieldName")
-    def getField: ByName = ???//TermName(s"get$protoFieldName")
-    def getMapField: ByName = ???//TermName(s"get${protoFieldName}Map")
-    def getListField: ByName = ???//TermName(s"get${protoFieldName}List")
-    def builderSetter: ByName = if (isIterable(scalaTreeType)) addAllMethodName else setField
-
-    val protoValueTree: Tree = {
 //      if (builderType.member(addField) != NoSymbol) { // 有 addXXX 方法，说明 XXX 是一个数组
 //        q"$protoIdent.$getListField"
 //      } else if (builderType.member(putField) != NoSymbol) { // 有 putXXX 方法，说明 XXX 是一个 map
@@ -210,22 +222,23 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
 //      } else {
 //        q""
 //      }
+
       ???
     }
 
-    lazy val protoValueSetterType: TypeRepr = {
-//      val pbBuilderType = typeOf[com.google.protobuf.Message.Builder]
-//      val setterOpt = if (builderType.member(addField) != NoSymbol) {
-//        Some(builderType.member(addAllMethodName))
-//      } else if (builderType.member(putField) != NoSymbol) {
-//        Some(builderType.member(putAllMethodName))
-//      } else if (builderType.member(setField) != NoSymbol) {
-//        Some(builderType.member(setField))
-//      } else {
-//        None
-//      }
-//      setterOpt.fold(NoType)(_.alternatives.map(_.asMethod.paramLists.head.head.typeSignature).find(t ⇒ !(t <:< pbBuilderType)).get)
-      ???
+    lazy val protoValueSetterType: Option[TypeRepr] = {
+      val setters = if (builderClassSymbol.memberMethod(addField).nonEmpty) {
+        builderClassSymbol.memberMethod(addAllMethodName)
+      } else if (builderClassSymbol.memberMethod(putField).nonEmpty) {
+        builderClassSymbol.memberMethod(putAllMethodName)
+      } else if (builderClassSymbol.memberMethod(setField).nonEmpty) {
+        builderClassSymbol.memberMethod(setField)
+      } else {
+        Nil
+      }
+      val pbBuilderType = TypeRepr.of[com.google.protobuf.Message.Builder]
+      setters.map(_.tree.asInstanceOf[DefDef].paramss.head.params.head.asInstanceOf[ValDef].tpt.tpe)
+        .filterNot(_ <:< pbBuilderType).headOption
     }
 
     lazy val protoValueGetterType: TypeRepr = {
@@ -246,10 +259,11 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
 
 
   // Convert scala clase class field value to protobuf value
-  private case class ToProtoFieldProcessor(scalaEntity:Ident,accessor: Symbol)
+  private case class ToProtoFieldProcessor(scalaEntity:Ident,protoBuilderIdent:Ident,accessor: Symbol)
       extends ToProtoProcessor(
-        Apply(scalaEntity,List(accessor.asInstanceOf[Term])),
-        ??? /*accessor.returnType*/,
+        protoBuilderIdent:Ident,
+        Select(scalaEntity,accessor),
+        scalaClassType.memberType(accessor),
         accessor.name.toString.capitalize)
 
   // Convert protobuf value to case class filed value
@@ -276,7 +290,7 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
 
   private[this] def resolveFieldType(originType: TypeRepr): TypeRepr = {
 //    originType.asSeenFrom(entityType, entityType.typeSymbol.asClass)
-    ???
+    originType
   }
 
   private[this] def resolveType[T](using Type[T]): TypeRepr = {
@@ -291,11 +305,12 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
     quotas.reflect.SymbolMethods.caseFields(classSymbol)
   }
 
-  private[this] def defaultProtoableFieldConvertTrees(scalaEntity:Ident): Map[String, Tree] = {
+  private[this] def defaultProtoableFieldConvertTrees(scalaEntity:Ident, protoBuilderIdent:Ident): List[Tuple2[String, Term]] = {
     getCaseAccessors().flatMap { a ⇒
-      val p = ToProtoFieldProcessor(scalaEntity,a)
+      val p = ToProtoFieldProcessor(scalaEntity, protoBuilderIdent,a)
+      p.tree.map(Printer.TreeAnsiCode.show).foreach(println(_))
       p.tree.map(p.protoFieldName -> _)
-    }.toMap
+    }
   }
 
   private[this] def protoableBody(protoableFieldConvertTrees: Iterable[Tree]): Tree = {
@@ -340,26 +355,23 @@ class ProtoScalableMacro[T,M<:GeneratedMessageV3](using typeT:Type[T], typeM:Typ
   }
 
   private def protosImpl: Expr[Protoable[T,M]] = {
-    protosImpl(ident => defaultProtoableFieldConvertTrees(ident).values, Nil)
+    protosImpl((scalaEntityIdent, protoBuilderIdent) => defaultProtoableFieldConvertTrees(scalaEntityIdent, protoBuilderIdent).map(_._2), Nil)
   }
 
 
-  private[this] inline def protosImpl(protoableFieldConvertTrees:Ident => Iterable[Tree], perTrees: Iterable[Tree]): Expr[Protoable[T,M]] = {
-//    q"""
-//       ..$perTrees
-//       new $packageName.Protoable[$caseClassType,$protoType] { ${protoableBody(caseClassType, protoType, protoableFieldConvertTrees)} }
-//    """
-    '{
+  private[this] def protosImpl(protoableFieldConvertTrees:(Ident, Ident) => List[Term], perTrees: Iterable[Tree]): Expr[Protoable[T,M]] = {
+    val expr = '{
       new Protoable[T,M] {
-        override def toProto(scalaEntity: T): M = {
-          val proto:M = ${newProtoTree}
-          val builder = proto.toBuilder
-//            ..$protoableFieldConvertTrees
-//            builder.build()
-          ${quotas.reflect.TreeMethods.asExprOf(Apply('{builder}.asInstanceOf[Term],List.empty[Term]).asInstanceOf[Nothing])}
+        override def toProto(scalaEntity: T): M = ${
+          val scalaEntityIdent = '{scalaEntity}.asTerm.asInstanceOf[Ident]
+          val x= builderBuildeWithTerms(protoableFieldConvertTrees(scalaEntityIdent,_))
+          println(x)
+          x.asExprOf[M]
         }
       }
     }
+    println(expr.show)
+    expr
   }
 
   def convertsImpl[T, M](using Type[T], Type[M]): Expr[ProtoScalable[T,M]] = {
@@ -487,7 +499,7 @@ object ProtoScalableMacro {
     ${protosImpl[T,M]}
   }
 
-  def protosImpl[T,M<:GeneratedMessageV3](using t:Type[T], m:Type[M],quotes: Quotes ):Expr[Protoable[T,M]] = {
+  def protosImpl[T,M<:GeneratedMessageV3](using t:Type[T], m:Type[M],quotes: Quotes):Expr[Protoable[T,M]] = {
     val protoScalableMacro = new ProtoScalableMacro(using t, m)
     protoScalableMacro.protosImpl
   }

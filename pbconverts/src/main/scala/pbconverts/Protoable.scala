@@ -1,9 +1,8 @@
 package pbconverts
 
 import annotation.targetName
-
 import java.time.ZonedDateTime
-import com.google.protobuf.{BoolValue, DoubleValue, FloatValue, GeneratedMessageV3, Int32Value, Int64Value, Message, StringValue, Timestamp}
+import com.google.protobuf.{BoolValue, DoubleValue, FloatValue, GeneratedMessageV3, Int32Value, Int64Value, Message, MessageOrBuilder, StringValue, Timestamp}
 
 import scala.collection.JavaConverters._
 
@@ -13,7 +12,7 @@ trait Protoable[-T, +M] {
 
 object Protoable {
 
-  inline def apply[T <: Product, M <: GeneratedMessageV3]: Protoable[T, M] = {
+  inline def apply[T <: Product, M <: GeneratedMessageV3 with MessageOrBuilder]: Protoable[T, M] = {
     ProtoScalableMacro.protoable[T, M]
   }
 
