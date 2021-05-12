@@ -13,7 +13,7 @@ trait Scalable[+T, -M] {
 
 object Scalable extends ScalableImplicits {
 
-  def apply[T <: Product, M]: Scalable[T, M] = ??? // macro ProtoScalableMacro.scalasImpl[T, M]
+  inline def apply[T <: Product, M]: Scalable[T, M] = ProtoScalableMacro.scalable[T, M]
 
   def apply[T, M](convert: M ⇒ T): Scalable[T, M] =
     new Scalable[T, M] {

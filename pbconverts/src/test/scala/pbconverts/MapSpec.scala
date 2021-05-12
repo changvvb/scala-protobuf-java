@@ -9,7 +9,6 @@ class MapSpec extends AnyFunSuite {
     val testMessage = TestMessage.default
 
     val pbTestMessage: PBTestMessage = Protoable[TestMessage, PBTestMessage].toProto(testMessage)
-    println(pbTestMessage)
     assert(pbTestMessage.getIntValue == testMessage.intValue)
     assert(pbTestMessage.getLongIntKVOrThrow(1L) == 1)
     assert(pbTestMessage.getLongStringKVOrThrow(1L) == "string1")

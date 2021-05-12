@@ -12,9 +12,8 @@ trait Protoable[-T, +M] {
 
 object Protoable {
 
-  inline def apply[T <: Product, M <: GeneratedMessageV3 with MessageOrBuilder]: Protoable[T, M] = {
+  inline def apply[T <: Product, M <: GeneratedMessageV3 with MessageOrBuilder]: Protoable[T, M] = 
     ProtoScalableMacro.protoable[T, M]
-  }
 
   def apply[T, M](f: T ⇒ M): Protoable[T, M] =
     new Protoable[T, M] {
