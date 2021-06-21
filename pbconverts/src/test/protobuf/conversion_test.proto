@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option java_package = "pbconverts";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+message PBTestMessage {
+    int32 int_value = 1;
+    int64 long_value = 2;
+    float float_value = 3;
+    double double_value = 4;
+    bool bool_value = 5;
+    string string_value = 6;
+    google.protobuf.Int32Value int_Opt = 7;
+    google.protobuf.Int64Value long_Opt = 8;
+    google.protobuf.FloatValue float_Opt = 9;
+    google.protobuf.DoubleValue double_opt = 10;
+    google.protobuf.BoolValue bool_opt = 11;
+    google.protobuf.StringValue string_opt = 12;
+    google.protobuf.Timestamp time = 13;
+    google.protobuf.Timestamp time_opt = 14;
+    repeated int32 int_array = 15;
+    repeated string string_array = 16;
+    repeated PBPerson person_array = 17;
+    repeated double seq = 18;
+    map<string,string> string_string_k_v = 19;
+    map<int64,string> long_string_k_v = 20;
+    map<string, int32> string_int_k_v = 21;
+    map<int64,int32> long_int_k_v = 22;
+}
+
+message PBPerson {
+    int64 id = 1;
+    string name = 2;
+    google.protobuf.StringValue phone = 3;
+    repeated string hobbies = 4;
+}
+
+message PBTestBytes {
+    bytes test_bytes = 1;
+}
+
+message IntMessage {
+    int32 value = 1;
+}
+
+message StringMessage {
+    string value = 1;
+}

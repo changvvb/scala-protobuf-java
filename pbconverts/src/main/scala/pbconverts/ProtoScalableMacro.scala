@@ -27,9 +27,8 @@ class ProtoScalableMacro[T,M](using typeT:Type[T], typeM:Type[M])(using quotas:Q
   private val protoCompanionIdent = Ident.apply(TermRef.apply(outer, name))
   private val newBuilderApply = Apply(Select.apply(protoCompanionIdent, newBuilderMethod),List.empty)
   private def builderBuildeWithTerms(termsBuilder:Ident => List[Term]) = ValDef.let(Symbol.spliceOwner,"builder",newBuilderApply) { ident =>
-    val terms = termsBuilder.apply(ident)
+    val terms = termsBuilder(ident.asInstanceOf[Ident])
     Block(terms,Apply(Select(ident,builderBuildMethod),Nil))
-
   }
 
   private[this] def implicitlyProtoable(entityType: TypeRepr, protoType: TypeRepr):Term = {
