@@ -8,9 +8,9 @@ import scala.reflect.ClassTag
 trait ScalableImplicits {
 
   // java.lang.Iterable[M] => That[T]
-  implicit def iterableScalable[That[_], T, M](implicit
+  implicit def iterableScalable[That[_], S, P](implicit
       scalable: Scalable[T, M],
-      bf: CanBuildFrom[Nothing, T, That[T]]
+      bf: CanBuildFrom[Nothing, S, That[S]]
   ): Scalable[That[T], java.lang.Iterable[M]] =
     Scalable { proto ⇒
       proto.asScala.map(scalable.toScala).to[That]
@@ -20,9 +20,9 @@ trait ScalableImplicits {
     Scalable { proto ⇒ proto.asScala.to[That] }
 
   // Repr[M] => That[T]
-  implicit def iterableSelfScalable[That, Repr <: TraversableLike[M, Repr], T, M](implicit
+  implicit def iterableSelfScalable[That, Repr <: TraversableLike[M, Repr], S, P](implicit
       scalable: Scalable[T, M],
-      bf: CanBuildFrom[Repr, T, That]
+      bf: CanBuildFrom[Repr, S, That]
   ): Scalable[That, Repr] = { proto ⇒
     proto.map(scalable.toScala)
   }

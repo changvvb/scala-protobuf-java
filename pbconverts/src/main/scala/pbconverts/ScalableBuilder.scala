@@ -1,14 +1,14 @@
 package pbconverts
 
-class ScalableBuilder[+T, M]() {
+class ScalableBuilder[+S, P]() {
 
-  def setField[TF, MF](scalaField: T ⇒ TF, value: M ⇒ MF): ScalableBuilder[T, M] = macro ProtoScalableMacro.setScalaFieldImpl[T, M, TF, MF]
+  def setField[SF, PF](scalaField: S ⇒ SF, value: P ⇒ PF): ScalableBuilder[S, P] = macro ProtoScalableMacro.setScalaFieldImpl[S, P, SF, PF]
 
-  def setFieldValue[TF, MF](scalaField: T ⇒ TF, value: MF): ScalableBuilder[T, M] = macro ProtoScalableMacro.setScalaFieldImpl[T, M, TF, MF]
+  def setFieldValue[SF, PF](scalaField: S ⇒ SF, value: PF): ScalableBuilder[S, P] = macro ProtoScalableMacro.setScalaFieldImpl[S, P, SF, PF]
 
-  def build: Scalable[T, M] = macro ProtoScalableMacro.buildScalableImpl[T, M]
+  def build: Scalable[S, P] = macro ProtoScalableMacro.buildScalableImpl[S, P]
 }
 
 object ScalableBuilder {
-  def apply[T, M]: ScalableBuilder[T, M] = macro ProtoScalableMacro.scalableBuilderApply[T, M]
+  def apply[S, P]: ScalableBuilder[S, P] = macro ProtoScalableMacro.scalableBuilderApply[S, P]
 }

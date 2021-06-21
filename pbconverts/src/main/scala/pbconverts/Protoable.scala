@@ -6,17 +6,17 @@ import com.google.protobuf.{BoolValue, DoubleValue, FloatValue, Int32Value, Int6
 
 import scala.collection.JavaConverters._
 
-trait Protoable[-T, +M] {
-  def toProto(entity: T): M
+trait Protoable[-S, +P] {
+  def toProto(entity: S): P
 }
 
 object Protoable {
 
-  def apply[T <: Product, M]: Protoable[T, M] = macro ProtoScalableMacro.protosImpl[T, M]
+  def apply[S <: Product, P]: Protoable[S, P] = macro ProtoScalableMacro.protosImpl[S, P]
 
-  def apply[T, M](f: T ⇒ M): Protoable[T, M] =
-    new Protoable[T, M] {
-      override def toProto(entity: T): M = f(entity)
+  def apply[S, P](f: S ⇒ P): Protoable[S, P] =
+    new Protoable[S, P] {
+      override def toProto(entity: S): P = f(entity)
     }
 
   implicit val javaDoubleProtoable = Protoable[Double, java.lang.Double](_.toDouble)
@@ -37,19 +37,19 @@ object Protoable {
     Timestamp.newBuilder().setSeconds(entity.toEpochSecond).setNanos(entity.getNano).build()
   }
 
-  implicit def iterableProtoable[T, M](implicit protoable: Protoable[T, M]): Protoable[scala.Iterable[T], java.util.List[M]] =
-    Protoable[scala.Iterable[T], java.util.List[M]] { entity ⇒
+  implicit def iterableProtoable[S, P](implicit protoable: Protoable[S, P]): Protoable[scala.Iterable[S], java.util.List[P]] =
+    Protoable[scala.Iterable[S], java.util.List[P]] { entity ⇒
       entity.toList.map(protoable.toProto).asJava
     }
 
-  implicit def iterableProtoable2[T]: Protoable[scala.Iterable[T], java.util.List[T]] =
-    Protoable[scala.Iterable[T], java.util.List[T]] { entity ⇒ entity.toList.asJava }
+  implicit def iterableProtoable2[S]: Protoable[scala.Iterable[S], java.util.List[S]] =
+    Protoable[scala.Iterable[S], java.util.List[S]] { entity ⇒ entity.toList.asJava }
 
-  implicit def arrayProtoable[T]: Protoable[Array[T], java.util.List[T]] =
-    Protoable[Array[T], java.util.List[T]] { entity ⇒ entity.toList.asJava }
+  implicit def arrayProtoable[S]: Protoable[Array[S], java.util.List[S]] =
+    Protoable[Array[S], java.util.List[S]] { entity ⇒ entity.toList.asJava }
 
-  implicit def arrayProtoable2[T, M](implicit protoable: Protoable[T, M]): Protoable[Array[T], java.lang.Iterable[M]] =
-    Protoable[Array[T], java.util.List[M]] { entity ⇒
+  implicit def arrayProtoable2[S, P](implicit protoable: Protoable[S, P]): Protoable[Array[S], java.lang.Iterable[P]] =
+    Protoable[Array[S], java.util.List[P]] { entity ⇒
       entity.toList.map(protoable.toProto).asJava
     }
 

@@ -2,15 +2,15 @@ package pbconverts
 
 import com.google.protobuf.Message
 
-class ProtoableBuilder[T, M <: Message]() {
+class ProtoableBuilder[S, P <: Message]() {
 
-  def setField[TF, MF](protoFieldSelector: M ⇒ MF, value: T ⇒ TF): this.type = macro ProtoScalableMacro.setProtoFieldImpl[T, M, TF, MF]
+  def setField[SF, PF](protoFieldSelector: P ⇒ PF, value: S ⇒ SF): this.type = macro ProtoScalableMacro.setProtoFieldImpl[S, P, SF, PF]
 
-  def setFieldValue[TF, MF](protoFieldSelector: M ⇒ MF, value: TF): this.type = macro ProtoScalableMacro.setProtoFieldImpl[T, M, TF, MF]
+  def setFieldValue[SF, PF](protoFieldSelector: P ⇒ PF, value: SF): this.type = macro ProtoScalableMacro.setProtoFieldImpl[S, P, SF, PF]
 
-  def build: Protoable[T, M] = macro ProtoScalableMacro.buildProtoableImpl[T, M]
+  def build: Protoable[S, P] = macro ProtoScalableMacro.buildProtoableImpl[S, P]
 }
 
 object ProtoableBuilder {
-  def apply[T, M <: Message]: ProtoableBuilder[T, M] = macro ProtoScalableMacro.protoableBuilderApply[T, M]
+  def apply[S, P <: Message]: ProtoableBuilder[S, P] = macro ProtoScalableMacro.protoableBuilderApply[S, P]
 }

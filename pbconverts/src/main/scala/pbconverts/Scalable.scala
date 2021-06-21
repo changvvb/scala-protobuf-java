@@ -7,17 +7,17 @@ import com.google.protobuf.{BoolValue, DoubleValue, FloatValue, Int32Value, Int6
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
-trait Scalable[+T, -M] {
-  def toScala(proto: M): T
+trait Scalable[+S, -P] {
+  def toScala(proto: P): S
 }
 
 object Scalable extends ScalableImplicits {
 
-  def apply[T <: Product, M]: Scalable[T, M] = macro ProtoScalableMacro.scalasImpl[T, M]
+  def apply[S <: Product, P]: Scalable[S, P] = macro ProtoScalableMacro.scalasImpl[S, P]
 
-  def apply[T, M](convert: M ⇒ T): Scalable[T, M] =
-    new Scalable[T, M] {
-      override def toScala(proto: M): T = convert(proto)
+  def apply[S, P](convert: P ⇒ S): Scalable[S, P] =
+    new Scalable[S, P] {
+      override def toScala(proto: P): S = convert(proto)
     }
 
   implicit val javaIntegerScalable = Scalable[Int, java.lang.Integer](_.toInt)
@@ -39,7 +39,7 @@ object Scalable extends ScalableImplicits {
   }
 
   //   java.lang.Iterable[M] => Array[T]
-  implicit def arrayScalable[T: ClassTag, M](implicit scalable: Scalable[T, M]): Scalable[Array[T], java.lang.Iterable[M]] =
+  implicit def arrayScalable[S: ClassTag, P](implicit scalable: Scalable[S, P]): Scalable[Array[S], java.lang.Iterable[P]] =
     Scalable { proto ⇒
       proto.asScala.map(scalable.toScala).toArray
     }
@@ -47,7 +47,7 @@ object Scalable extends ScalableImplicits {
   implicit def arrayScalable2[T: ClassTag]: Scalable[Array[T], java.lang.Iterable[T]] = Scalable { proto ⇒ proto.asScala.toArray }
 
   // M => Option[T]
-  implicit def optScalable[T, M](implicit scalable: Scalable[T, M]): Scalable[Option[T], M] =
+  implicit def optScalable[S, P](implicit scalable: Scalable[S, P]): Scalable[Option[S], P] =
     Scalable { proto ⇒
       Option(scalable.toScala(proto))
     }

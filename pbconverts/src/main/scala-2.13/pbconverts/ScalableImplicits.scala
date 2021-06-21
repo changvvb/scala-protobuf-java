@@ -7,10 +7,10 @@ import scala.reflect.ClassTag
 trait ScalableImplicits {
 
   //   java.lang.Iterable[M] => That[T]
-  implicit def iterableScalable[That[_], T, M](implicit
-      scalable: Scalable[T, M],
-      bf: BuildFrom[Seq[_], T, That[T]]
-  ): Scalable[That[T], java.lang.Iterable[M]] =
+  implicit def iterableScalable[That[_], S, P](implicit
+      scalable: Scalable[S, P],
+      bf: BuildFrom[Seq[_], S, That[S]]
+  ): Scalable[That[S], java.lang.Iterable[P]] =
     Scalable { proto ⇒
       bf.fromSpecific(Seq.empty)(proto.asScala.iterator.map(scalable.toScala))
     }
@@ -21,9 +21,9 @@ trait ScalableImplicits {
     }
 
   //  // Repr[M] => That[T]
-  implicit def iterableSelfScalable[That, Repr <: Iterable[M], T, M](implicit
-      scalable: Scalable[T, M],
-      bf: BuildFrom[Iterable[_], T, That]
+  implicit def iterableSelfScalable[That, Repr <: Iterable[P], S, P](implicit
+      scalable: Scalable[S, P],
+      bf: BuildFrom[Iterable[_], S, That]
   ): Scalable[That, Repr] = { proto ⇒
     bf.newBuilder(proto.map(scalable.toScala)).result()
   }

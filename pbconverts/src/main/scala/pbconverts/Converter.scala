@@ -2,8 +2,8 @@ package pbconverts
 
 object Converter {
 
-  def toProto[T, M](d: T)(implicit protoable: Protoable[T, M]): M = protoable.toProto(d)
+  def toProto[S, P](d: S)(implicit protoable: Protoable[S, P]): P = protoable.toProto(d)
 
-  def toScala[T, M](m: M)(implicit scalable: Scalable[T, M]): T = scalable.toScala(m)
+  def toScala[S, P](m: P)(implicit scalable: Scalable[S, P]): S = scalable.toScala(m)
 
 }

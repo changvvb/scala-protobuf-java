@@ -1,16 +1,16 @@
 package pbconverts
 
-trait ProtoScalable[T, M] extends Protoable[T, M] with Scalable[T, M]
+trait ProtoScalable[S, P] extends Protoable[S, P] with Scalable[S, P]
 
 object ProtoScalable {
 
-  def apply[T <: Product, M]: ProtoScalable[T, M] = macro ProtoScalableMacro.convertsImpl[T, M]
+  def apply[S <: Product, P]: ProtoScalable[S, P] = macro ProtoScalableMacro.convertsImpl[S, P]
 
-  def apply[T, M](toProtoFun: T ⇒ M, toScalaFun: M ⇒ T): ProtoScalable[T, M] =
-    new ProtoScalable[T, M] {
+  def apply[S, P](toProtoFun: S ⇒ P, toScalaFun: P ⇒ S): ProtoScalable[S, P] =
+    new ProtoScalable[S, P] {
 
-      override def toScala(proto: M): T = toScalaFun(proto)
+      override def toScala(proto: P): S = toScalaFun(proto)
 
-      override def toProto(entity: T): M = toProtoFun(entity)
+      override def toProto(entity: S): P = toProtoFun(entity)
     }
 }
