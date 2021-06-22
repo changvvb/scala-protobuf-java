@@ -15,10 +15,7 @@ object Scalable extends ScalableImplicits {
 
   def apply[S <: Product, P]: Scalable[S, P] = macro ProtoScalableMacro.scalasImpl[S, P]
 
-  def apply[S, P](convert: P ⇒ S): Scalable[S, P] =
-    new Scalable[S, P] {
-      override def toScala(proto: P): S = convert(proto)
-    }
+  def apply[S, P](convert: P ⇒ S): Scalable[S, P] = x => convert(x)
 
   implicit val javaIntegerScalable = Scalable[Int, java.lang.Integer](_.toInt)
   implicit val javaLongScalable = Scalable[Long, java.lang.Long](_.toLong)

@@ -9,9 +9,9 @@ trait ScalableImplicits {
 
   // java.lang.Iterable[M] => That[T]
   implicit def iterableScalable[That[_], S, P](implicit
-      scalable: Scalable[T, M],
+      scalable: Scalable[S, P],
       bf: CanBuildFrom[Nothing, S, That[S]]
-  ): Scalable[That[T], java.lang.Iterable[M]] =
+  ): Scalable[That[S], java.lang.Iterable[P]] =
     Scalable { proto ⇒
       proto.asScala.map(scalable.toScala).to[That]
     }
@@ -20,8 +20,8 @@ trait ScalableImplicits {
     Scalable { proto ⇒ proto.asScala.to[That] }
 
   // Repr[M] => That[T]
-  implicit def iterableSelfScalable[That, Repr <: TraversableLike[M, Repr], S, P](implicit
-      scalable: Scalable[T, M],
+  implicit def iterableSelfScalable[That, Repr <: TraversableLike[P, Repr], S, P](implicit
+      scalable: Scalable[S, P],
       bf: CanBuildFrom[Repr, S, That]
   ): Scalable[That, Repr] = { proto ⇒
     proto.map(scalable.toScala)

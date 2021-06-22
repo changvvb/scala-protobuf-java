@@ -14,10 +14,7 @@ object Protoable {
 
   def apply[S <: Product, P]: Protoable[S, P] = macro ProtoScalableMacro.protosImpl[S, P]
 
-  def apply[S, P](f: S ⇒ P): Protoable[S, P] =
-    new Protoable[S, P] {
-      override def toProto(entity: S): P = f(entity)
-    }
+  def apply[S, P](convert: S ⇒ P): Protoable[S, P] = x => convert(x)
 
   implicit val javaDoubleProtoable = Protoable[Double, java.lang.Double](_.toDouble)
   implicit val javaFloatProtoable = Protoable[Float, java.lang.Float](_.toFloat)
