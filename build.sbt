@@ -2,7 +2,7 @@ import sbt._
 
 //lazy val scala213 = "2.13.4"
 //lazy val scala212 = "2.12.12"
-lazy val scala3 = "3.0.2-RC1-bin-SNAPSHOT"
+lazy val scala3 = "3.1.0"
 
 //lazy val supportedScalaVersions = List(scala212, scala213)
 

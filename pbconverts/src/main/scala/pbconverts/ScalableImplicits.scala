@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
 trait ScalableImplicits {
 
 //     java.lang.Iterable[M] => That[T]
-  given[That[_], T, M](using scalable: Scalable[T, M], bf: BuildFrom[Seq[_], T, That[T]]): Scalable[That[T], java.lang.Iterable[M]] =
+  given [That[_], T, M](using scalable: Scalable[T, M], bf: BuildFrom[Seq[_], T, That[T]]): Scalable[That[T], java.lang.Iterable[M]] =
     Scalable { proto ⇒
       bf.fromSpecific(Seq.empty)(proto.asScala.iterator.map(scalable.toScala))
     }
@@ -20,7 +20,7 @@ trait ScalableImplicits {
     }
 
   //  // Repr[M] => That[T]
-  given[That, Repr <: Iterable[M], T, M](using
+  given [That, Repr <: Iterable[M], T, M](using
       scalable: Scalable[T, M],
       bf: BuildFrom[Iterable[_], T, That]
   ): Scalable[That, Repr] = { proto ⇒

@@ -9,5 +9,5 @@ object MacroCache {
   def getBuilderId: Int = builderCount.synchronized { builderCount += 1; builderCount }
   def getIdentityId: Int = identityCount.synchronized { identityCount += 1; identityCount }
 
-  lazy val builderFunctionTrees: mutable.Map[Int, mutable.Map[String, Any]] = mutable.Map.empty
+  lazy val builderFunctionTrees: mutable.Map[String, mutable.Map[String, Any]] = mutable.Map.empty
 }

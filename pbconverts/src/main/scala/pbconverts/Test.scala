@@ -1,8 +1,7 @@
 package pbconverts
 
-object Test   {
+object Test {
 
   given Int = 1
   implicitly[Int].toString
 }
-

@@ -12,7 +12,7 @@ trait Protoable[-T, +M] {
 
 object Protoable {
 
-  inline def apply[T <: Product, M <: GeneratedMessageV3 with MessageOrBuilder]: Protoable[T, M] = 
+  inline def apply[T <: Product, M <: GeneratedMessageV3 with MessageOrBuilder]: Protoable[T, M] =
     ProtoScalableMacro.protoable[T, M]
 
   def apply[T, M](f: T ⇒ M): Protoable[T, M] =
@@ -27,18 +27,18 @@ object Protoable {
   given Protoable[Char, java.lang.Character] = Protoable(_.toChar)
   given Protoable[Byte, java.lang.Byte] = Protoable(_.toByte)
 
-  given Protoable[String, StringValue]= Protoable(StringValue.of)
-  given Protoable[Double, DoubleValue]= Protoable(DoubleValue.of)
-  given Protoable[Float, FloatValue]= Protoable(FloatValue.of)
-  given Protoable[Int, Int32Value]= Protoable(Int32Value.of)
-  given Protoable[Boolean, BoolValue]= Protoable(BoolValue.of)
-  given Protoable[Long, Int64Value]= Protoable(Int64Value.of)
+  given Protoable[String, StringValue] = Protoable(StringValue.of)
+  given Protoable[Double, DoubleValue] = Protoable(DoubleValue.of)
+  given Protoable[Float, FloatValue] = Protoable(FloatValue.of)
+  given Protoable[Int, Int32Value] = Protoable(Int32Value.of)
+  given Protoable[Boolean, BoolValue] = Protoable(BoolValue.of)
+  given Protoable[Long, Int64Value] = Protoable(Int64Value.of)
 
   given Protoable[ZonedDateTime, Timestamp] = Protoable { entity ⇒
     Timestamp.newBuilder().setSeconds(entity.toEpochSecond).setNanos(entity.getNano).build()
   }
 
-   given [T, M](using protoable: Protoable[T, M]): Protoable[scala.Iterable[T], java.util.List[M]] =
+  given [T, M](using protoable: Protoable[T, M]): Protoable[scala.Iterable[T], java.util.List[M]] =
     Protoable[scala.Iterable[T], java.util.List[M]] { entity ⇒
       entity.toList.map(protoable.toProto).asJava
     }
@@ -46,33 +46,33 @@ object Protoable {
   given [T]: Protoable[scala.Iterable[T], java.util.List[T]] =
     Protoable[scala.Iterable[T], java.util.List[T]] { entity ⇒ entity.toList.asJava }
 
-  given[T]: Protoable[Array[T], java.util.List[T]] =
+  given [T]: Protoable[Array[T], java.util.List[T]] =
     Protoable[Array[T], java.util.List[T]] { entity ⇒ entity.toList.asJava }
 
-  given[T, M](using protoable: Protoable[T, M]): Protoable[Array[T], java.lang.Iterable[M]] =
+  given [T, M](using protoable: Protoable[T, M]): Protoable[Array[T], java.lang.Iterable[M]] =
     Protoable[Array[T], java.util.List[M]] { entity ⇒
       entity.toList.map(protoable.toProto).asJava
     }
 
-  given[F, Target <: Any](using protoable: Protoable[F, Target]): Protoable[Option[F], Target] =
+  given [F, Target <: Any](using protoable: Protoable[F, Target]): Protoable[Option[F], Target] =
     Protoable[Option[F], Target] { (entity: Option[F]) ⇒
       entity.map(protoable.toProto).getOrElse(None.orNull.asInstanceOf[Target])
     }
 
-  given[T]: Protoable[Option[T], T] =
+  given [T]: Protoable[Option[T], T] =
     Protoable[Option[T], T] { (opt: Option[T]) => opt.getOrElse(None.orNull.asInstanceOf[T]) }
 
-  given[K, V]: Protoable[Map[K, V], java.util.Map[K, V]] =
+  given [K, V]: Protoable[Map[K, V], java.util.Map[K, V]] =
     Protoable[Map[K, V], java.util.Map[K, V]] { m ⇒ m.asJava }
 
   @targetName("for key mapping")
-  given[K1, K2, V](using kProtoable: Protoable[K1, K2]): Protoable[Map[K1, V], java.util.Map[K2, V]] =
+  given [K1, K2, V](using kProtoable: Protoable[K1, K2]): Protoable[Map[K1, V], java.util.Map[K2, V]] =
     Protoable[Map[K1, V], java.util.Map[K2, V]] { m ⇒ m.map { case (k, v) ⇒ kProtoable.toProto(k) -> v }.asJava }
 
-  given[K, V1, V2](using vProtoable: Protoable[V1, V2]): Protoable[Map[K, V1], java.util.Map[K, V2]] =
+  given [K, V1, V2](using vProtoable: Protoable[V1, V2]): Protoable[Map[K, V1], java.util.Map[K, V2]] =
     Protoable[Map[K, V1], java.util.Map[K, V2]] { m ⇒ m.map { case (k, v) ⇒ k -> vProtoable.toProto(v) }.asJava }
 
-  given[K1, K2, V1, V2](using
+  given [K1, K2, V1, V2](using
       kProtoable: Protoable[K1, K2],
       vProtoable: Protoable[V1, V2]
   ): Protoable[Map[K1, V1], java.util.Map[K2, V2]] =

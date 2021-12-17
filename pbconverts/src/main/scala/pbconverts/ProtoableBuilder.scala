@@ -4,13 +4,15 @@ import com.google.protobuf.Message
 
 class ProtoableBuilder[T, M <: Message]() {
 
-  def setField[TF, MF](protoFieldSelector: M ⇒ MF, value: T ⇒ TF): this.type = ??? //macro ProtoScalableMacro.setProtoFieldImpl[T, M, TF, MF]
+  inline def setField[TF, MF](inline protoFieldSelector: M ⇒ MF, inline value: T ⇒ TF): ProtoableBuilder[T, M] =
+    ProtoScalableMacro.protoableBuilderSetField[T, M, MF, TF](protoFieldSelector, value)
 
-  def setFieldValue[TF, MF](protoFieldSelector: M ⇒ MF, value: TF): this.type = ??? //macro ProtoScalableMacro.setProtoFieldImpl[T, M, TF, MF]
+  def setFieldValue[TF, MF](protoFieldSelector: M ⇒ MF, value: TF): this.type = ??? // macro ProtoScalableMacro.setProtoFieldImpl[T, M, TF, MF]
 
-  def build: Protoable[T, M] = ??? //macro ProtoScalableMacro.buildProtoableImpl[T, M]
+  inline def build: Protoable[T, M] = ProtoScalableMacro.buildProtoable[T, M]
 }
 
 object ProtoableBuilder {
-  def apply[T, M <: Message]: ProtoableBuilder[T, M] = ??? //macro ProtoScalableMacro.protoableBuilderApply[T, M]
+  val _default = new ProtoableBuilder[Nothing, Nothing]
+  inline def apply[T, M <: Message]: ProtoableBuilder[T, M] = ProtoScalableMacro.protoableBuilder[T, M]
 }
