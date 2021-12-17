@@ -6,16 +6,16 @@ import ConversionTest.{PBTestBytes, PBTestMessage}
 import org.scalatest.funsuite.AnyFunSuite
 
 class MapSpec extends AnyFunSuite {
-  // test("test map") {
-  //   val testMessage = TestMessage.default
+  test("test map") {
+    val testMessage = TestMessage.default
 
-  //   val pbTestMessage: PBTestMessage = Protoable[TestMessage, PBTestMessage].toProto(testMessage)
-  //   assert(pbTestMessage.getIntValue == testMessage.intValue)
-  //   assert(pbTestMessage.getLongIntKVOrThrow(1L) == 1)
-  //   assert(pbTestMessage.getLongStringKVOrThrow(1L) == "string1")
-  //   assert(pbTestMessage.getStringIntKVOrThrow("string1") == 1)
-  //   assert(pbTestMessage.getStringStringKVOrThrow("string1") == "string1")
-  // }
+    val pbTestMessage: PBTestMessage = Protoable[TestMessage, PBTestMessage].toProto(testMessage)
+    assert(pbTestMessage.getIntValue == testMessage.intValue)
+    assert(pbTestMessage.getLongIntKVOrThrow(1L) == 1)
+    assert(pbTestMessage.getLongStringKVOrThrow(1L) == "string1")
+    assert(pbTestMessage.getStringIntKVOrThrow("string1") == 1)
+    assert(pbTestMessage.getStringStringKVOrThrow("string1") == "string1")
+  }
 
   case class TestBytes(m: Map[String, Int])
 
@@ -27,11 +27,11 @@ class MapSpec extends AnyFunSuite {
 
     assert(pbTest1.getTestBytes.toStringUtf8 == "test,bytes")
 
-    //  val test = ScalableBuilder[TestBytes, PBTestBytes]
-    //    .setField(_.m, _.getTestBytes.toStringUtf8.split(",").map(_ -> 1).toMap)
-    //    .build
-    //    .toScala(PBTestBytes.newBuilder().setTestBytes(ByteString.copyFromUtf8("test,bytes")).build())
+    val test = ScalableBuilder[TestBytes, PBTestBytes]
+      .setField(_.m, _.getTestBytes.toStringUtf8.split(",").map(_ -> 1).toMap)
+      .build
+      .toScala(PBTestBytes.newBuilder().setTestBytes(ByteString.copyFromUtf8("test,bytes")).build())
 
-    //  assert(test.m == Map("test" -> 1, "bytes" -> 1))
+    assert(test.m == Map("test" -> 1, "bytes" -> 1))
   }
 }
