@@ -19,7 +19,7 @@ case class TestMessage(
     timeOpt: Option[ZonedDateTime],
     intArray: Array[Int],
     stringArray: Array[String],
-//                        personArray: Array[Person],
+    personArray: Array[Person],
     seq: Seq[Double],
     stringStringKV: Map[String, String], // not convert k or v
     longStringKV: Map[Long, String], // convert k, but not v
@@ -28,6 +28,9 @@ case class TestMessage(
 )
 
 object TestMessage {
+
+  def apply():TestMessage = ???
+
   def default =
     TestMessage(
       intValue = 64,
@@ -46,7 +49,7 @@ object TestMessage {
       timeOpt = Some(ZonedDateTime.now()),
       intArray = Array(100, 200, 300),
       stringArray = Array("string1", "string2", "string3"),
-//                        personArray = Array(Person.default),
+      personArray = Array(Person.default),
       seq = Seq(1.0, 2.0, 3.0),
       stringStringKV = Map("string1" -> "string1", "string2" -> "string2"),
       longStringKV = Map(1L -> "string1", 2L -> "string2"),
@@ -72,7 +75,7 @@ object TestMessage {
       timeOpt = None,
       intArray = Array.empty,
       stringArray = Array.empty,
-//                        personArray = Array.empty,
+      personArray = Array.empty,
       seq = Seq.empty,
       stringStringKV = Map.empty,
       longStringKV = Map.empty,

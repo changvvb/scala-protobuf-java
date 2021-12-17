@@ -12,7 +12,7 @@ object TestMain extends App {
   val stringMessage = MessageWithType("test")
   // val x = Protoable[MessageWithType[String], StringMessage].toProto(stringMessage)
   val x = StringMessage.newBuilder.setValue("Test").build
-  val y = Scalable[MessageWithType[String], StringMessage].toScala(x)
+//   val y = Scalable[MessageWithType[String], StringMessage].toScala(x)
 
   println(x.getValue)
   // println(y)

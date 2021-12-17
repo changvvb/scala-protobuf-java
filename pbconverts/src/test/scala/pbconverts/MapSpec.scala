@@ -20,6 +20,7 @@ class MapSpec extends AnyFunSuite {
   case class TestBytes(m: Map[String, Int])
 
   test("test conversion between bytes in protobuf and Map in case class") {
+    PBTestBytes.newBuilder().setTestBytes
     val pbTest1 = ProtoableBuilder[TestBytes, PBTestBytes]
       .setField(_.getTestBytes, x => ByteString.copyFromUtf8(x.m.keys.mkString(",")))
       .build
