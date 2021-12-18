@@ -9,11 +9,11 @@ import scala.quoted.ToExpr.NoneToExpr
 import scala.quoted.Exprs
 
 // scalastyle:off number.of.methods
-class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
+class ProtoScalableMacro[S: Type, P <: Message: Type](using quotas: Quotes) {
   import quotas.reflect._
 
-  private val scalaClassType = TypeRepr.of[T].dealias
-  private val protoClassType = TypeRepr.of[M].dealias
+  private val scalaClassType = TypeRepr.of[S].dealias
+  private val protoClassType = TypeRepr.of[P].dealias
 
   private val scalaClassSymbol = scalaClassType.typeSymbol
   private val protoClassSymbol = protoClassType.typeSymbol
@@ -321,15 +321,15 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
     }
   }
 
-  private[this] def protoableBody(scalaEntityIdent: Ident, protoableFieldConvertTrees: (Ident, Ident) => List[Term]): Expr[M] = {
-    builderBuildeWithTerms(protoableFieldConvertTrees(scalaEntityIdent, _)).asExprOf[M]
+  private[this] def protoableBody(scalaEntityIdent: Ident, protoableFieldConvertTrees: (Ident, Ident) => List[Term]): Expr[P] = {
+    builderBuildeWithTerms(protoableFieldConvertTrees(scalaEntityIdent, _)).asExprOf[P]
   }
 
   private def defalutScalableFieldConvertTrees(protoIdent: Ident): Map[String, Term] = {
     getCaseAccessors().flatMap(accessor ⇒ ToScalaFieldProcessor(protoIdent, accessor).tree.map(accessor.name.toString -> _)).toMap
   }
 
-  private def scalableBody(protoIdent: Ident, scalableFieldConvertTrees: Ident => Iterable[Term]): Expr[T] = {
+  private def scalableBody(protoIdent: Ident, scalableFieldConvertTrees: Ident => Iterable[Term]): Expr[S] = {
     val args = scalableFieldConvertTrees(protoIdent).toList
 
     val types = scalaClassType match {
@@ -338,50 +338,50 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
     }
 
     val scalaCompanionIdent = Ref(scalaClassType.typeSymbol.companionModule)
-    Select.overloaded(scalaCompanionIdent, "apply", types, args).asExprOf[T]
+    Select.overloaded(scalaCompanionIdent, "apply", types, args).asExprOf[S]
   }
 
-  def scalasImpl: Expr[Scalable[T, M]] = {
+  def scalasImpl: Expr[Scalable[S, P]] = {
     scalasImpl { protoIdent =>
       val args = defalutScalableFieldConvertTrees(protoIdent)
       getCaseAccessors().flatMap(a => args.get(a.name))
     }
   }
 
-  private[this] def scalasImpl(scalableFieldConvertTrees: Ident => List[Term]): Expr[Scalable[T, M]] = {
+  private[this] def scalasImpl(scalableFieldConvertTrees: Ident => List[Term]): Expr[Scalable[S, P]] = {
     '{
-      new Scalable[T, M] {
-        def toScala(proto: M): T = ${ scalableBody('{ proto }.asTerm.asInstanceOf[Ident], scalableFieldConvertTrees) }
+      new Scalable[S, P] {
+        def toScala(proto: P): S = ${ scalableBody('{ proto }.asTerm.asInstanceOf[Ident], scalableFieldConvertTrees) }
       }
     }
   }
 
-  private def protosImpl: Expr[Protoable[T, M]] = {
+  private def protosImpl: Expr[Protoable[S, P]] = {
     protosImpl((scalaEntityIdent, protoBuilderIdent) => defaultProtoableFieldConvertTrees(scalaEntityIdent, protoBuilderIdent).map(_._2))
   }
 
-  private[this] def protosImpl(protoableFieldConvertTrees: (Ident, Ident) => List[Term]): Expr[Protoable[T, M]] = {
+  private[this] def protosImpl(protoableFieldConvertTrees: (Ident, Ident) => List[Term]): Expr[Protoable[S, P]] = {
     '{
-      new Protoable[T, M] {
-        def toProto(scalaEntity: T): M = ${ protoableBody('{ scalaEntity }.asTerm.asInstanceOf[Ident], protoableFieldConvertTrees) }
+      new Protoable[S, P] {
+        def toProto(scalaEntity: S): P = ${ protoableBody('{ scalaEntity }.asTerm.asInstanceOf[Ident], protoableFieldConvertTrees) }
       }
     }
   }
 
-  def protoScalableImpl: Expr[ProtoScalable[T, M]] = {
+  def protoScalableImpl: Expr[ProtoScalable[S, P]] = {
     '{
-      new ProtoScalable[T, M] {
-        def toScala(proto: M) = ${ scalableBody('{ proto }.asTerm.asInstanceOf[Ident], defalutScalableFieldConvertTrees(_).values) }
+      new ProtoScalable[S, P] {
+        def toScala(proto: P) = ${ scalableBody('{ proto }.asTerm.asInstanceOf[Ident], defalutScalableFieldConvertTrees(_).values) }
 
-        def toProto(scalaEntity: T): M = ${
+        def toProto(scalaEntity: S): P = ${
           val scalaEntityIdent = '{ scalaEntity }.asTerm.asInstanceOf[Ident]
-          builderBuildeWithTerms(defaultProtoableFieldConvertTrees(scalaEntityIdent, _).map(_._2)).asExprOf[M]
+          builderBuildeWithTerms(defaultProtoableFieldConvertTrees(scalaEntityIdent, _).map(_._2)).asExprOf[P]
         }
       }
     }
   }
 
-  private def buildProtoableImpl: Expr[Protoable[T, M]] = {
+  private def buildProtoableImpl: Expr[Protoable[S, P]] = {
     val customTrees = MacroCache.builderFunctionTrees.getOrElse(getBuilderId(), mutable.Map.empty)
     def getCustomTrees(scalaIdent: Ident, protoBuilderIdent: Ident): Map[String, Term] = customTrees.map { case (key, tree) ⇒
       tree match { // setField
@@ -403,7 +403,7 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
     })
   }
 
-  private def buildScalableImpl: Expr[Scalable[T, M]] = {
+  private def buildScalableImpl: Expr[Scalable[S, P]] = {
     val builderId = getBuilderId()
     val customTrees = MacroCache.builderFunctionTrees.getOrElse(builderId, mutable.Map.empty)
 
@@ -432,7 +432,7 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
     }
   }
 
-  private def setScalaFieldImpl[TF, MF](scalaField: Expr[T => TF], value: Expr[(M => MF) | MF]): Expr[ScalableBuilder[T, M]] = {
+  private def setScalaFieldImpl[TF, MF](scalaField: Expr[S => TF], value: Expr[(P => MF) | MF]): Expr[ScalableBuilder[S, P]] = {
     scalaField.asTerm match {
       case Inlined(_, _, Inlined(_, _, Block(List(DefDef(_, _, _, Some(Select(_, symbolName)))), _))) =>
         val builderId = getBuilderId()
@@ -442,7 +442,7 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
     }
   }
 
-  private def setProtoFieldImpl[TF: Type, MF: Type](protoFieldSelector: Expr[M ⇒ MF], value: Expr[(T ⇒ TF) | TF]): Expr[ProtoableBuilder[T, M]] = {
+  private def setProtoFieldImpl[TF: Type, MF: Type](protoFieldSelector: Expr[P ⇒ MF], value: Expr[(S ⇒ TF) | TF]): Expr[ProtoableBuilder[S, P]] = {
     val getter = "^get(\\w+)$".r
     val listGetter = "^get(\\w+)List$".r
     val mapGetter = "^get(\\w+)Map$".r
@@ -464,12 +464,12 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
 
   val annoBuilderPrefix = "AnonBuilder$"
 
-  private def scalableBuilderApply: Expr[ScalableBuilder[T, M]] = {
-    '{ ScalableBuilder._default.asInstanceOf[ScalableBuilder[T, M]] }
+  private def scalableBuilderApply: Expr[ScalableBuilder[S, P]] = {
+    '{ ScalableBuilder._default.asInstanceOf[ScalableBuilder[S, P]] }
   }
 
-  private def protoableBuilderApply: Expr[ProtoableBuilder[T, M]] = {
-    '{ ProtoableBuilder._default.asInstanceOf[ProtoableBuilder[T, M]] }
+  private def protoableBuilderApply: Expr[ProtoableBuilder[S, P]] = {
+    '{ ProtoableBuilder._default.asInstanceOf[ProtoableBuilder[S, P]] }
   }
 
   private[this] def getBuilderId(): String = {
@@ -480,74 +480,74 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
 
 object ProtoScalableMacro {
 
-  inline def protoable[T, M <: Message]: Protoable[T, M] = ${ protosImpl[T, M] }
+  inline def protoable[S, P <: Message]: Protoable[S, P] = ${ protosImpl[S, P] }
 
-  def protosImpl[T: Type, M <: Message: Type](using quotes: Quotes): Expr[Protoable[T, M]] = {
-    val protoScalableMacro = new ProtoScalableMacro[T, M]
+  def protosImpl[S: Type, P <: Message: Type](using quotes: Quotes): Expr[Protoable[S, P]] = {
+    val protoScalableMacro = new ProtoScalableMacro[S, P]
     protoScalableMacro.protosImpl
   }
 
-  inline def protoableBuilder[T, M <: Message]: ProtoableBuilder[T, M] = ${ protoableBuilderImpl[T, M] }
+  inline def protoableBuilder[S, P <: Message]: ProtoableBuilder[S, P] = ${ protoableBuilderImpl[S, P] }
 
-  def protoableBuilderImpl[T: Type, M <: Message: Type](using quotes: Quotes): Expr[ProtoableBuilder[T, M]] = {
-    val protoScalableMacro = new ProtoScalableMacro[T, M]
+  def protoableBuilderImpl[S: Type, P <: Message: Type](using quotes: Quotes): Expr[ProtoableBuilder[S, P]] = {
+    val protoScalableMacro = new ProtoScalableMacro[S, P]
     protoScalableMacro.protoableBuilderApply
   }
 
-  inline def protoableBuilderSetField[T, M <: Message, MF, TF](inline protoFieldSelector: M ⇒ MF, inline value: (T ⇒ TF) | TF): ProtoableBuilder[T, M] =
-    ${ protoableBuilderSetFieldImpl[T, M, MF, TF]('protoFieldSelector, 'value) }
+  inline def protoableBuilderSetField[S, P <: Message, SF, PF](inline protoFieldSelector: P ⇒ SF, inline value: (S ⇒ PF) | PF): ProtoableBuilder[S, P] =
+    ${ protoableBuilderSetFieldImpl[S, P, SF, PF]('protoFieldSelector, 'value) }
 
-  def protoableBuilderSetFieldImpl[T: Type, M <: Message: Type, MF: Type, TF: Type](protoFieldSelector: Expr[M ⇒ MF], value: Expr[(T ⇒ TF) | TF])(using
+  def protoableBuilderSetFieldImpl[S: Type, P <: Message: Type, PF: Type, SF: Type](protoFieldSelector: Expr[P ⇒ PF], value: Expr[(S ⇒ SF) | SF])(using
       quotes: Quotes
-  ): Expr[ProtoableBuilder[T, M]] = {
-    val protoScalableMacro = new ProtoScalableMacro[T, M]
-    protoScalableMacro.setProtoFieldImpl[TF, MF](protoFieldSelector, value)
+  ): Expr[ProtoableBuilder[S, P]] = {
+    val protoScalableMacro = new ProtoScalableMacro[S, P]
+    protoScalableMacro.setProtoFieldImpl[SF, PF](protoFieldSelector, value)
   }
 
-  inline def scalableBuilder[T, M <: Message]: ScalableBuilder[T, M] = ${ scalableBuilderImpl[T, M] }
+  inline def scalableBuilder[S, P <: Message]: ScalableBuilder[S, P] = ${ scalableBuilderImpl[S, P] }
 
-  def scalableBuilderImpl[T: Type, M <: Message: Type](using quotes: Quotes): Expr[ScalableBuilder[T, M]] = {
-    val protoScalableMacro = new ProtoScalableMacro[T, M]
+  def scalableBuilderImpl[S: Type, P <: Message: Type](using quotes: Quotes): Expr[ScalableBuilder[S, P]] = {
+    val protoScalableMacro = new ProtoScalableMacro[S, P]
     protoScalableMacro.scalableBuilderApply
   }
 
-  inline def scalableBuilderSetField[T, M <: Message, TF, MF](inline scalaFieldSelector: T ⇒ TF, inline value: (M ⇒ MF) | MF): ScalableBuilder[T, M] =
-    ${ scalableBuilderSetFieldImpl[T, M, TF, MF]('scalaFieldSelector, 'value) }
+  inline def scalableBuilderSetField[S, P <: Message, SF, PF](inline scalaFieldSelector: S ⇒ SF, inline value: (P ⇒ PF) | PF): ScalableBuilder[S, P] =
+    ${ scalableBuilderSetFieldImpl[S, P, SF, PF]('scalaFieldSelector, 'value) }
 
-  def scalableBuilderSetFieldImpl[T: Type, M <: Message: Type, TF: Type, MF: Type](scalaFieldSelector: Expr[T ⇒ TF], value: Expr[(M ⇒ MF) | MF])(using
+  def scalableBuilderSetFieldImpl[S: Type, P <: Message: Type, SF: Type, PF: Type](scalaFieldSelector: Expr[S ⇒ SF], value: Expr[(P ⇒ PF) | PF])(using
       quotes: Quotes
-  ): Expr[ScalableBuilder[T, M]] = {
-    val protoScalableMacro = new ProtoScalableMacro[T, M]
-    protoScalableMacro.setScalaFieldImpl[TF, MF](scalaFieldSelector, value)
+  ): Expr[ScalableBuilder[S, P]] = {
+    val protoScalableMacro = new ProtoScalableMacro[S, P]
+    protoScalableMacro.setScalaFieldImpl[SF, PF](scalaFieldSelector, value)
   }
 
-  inline def buildScalable[T, M <: Message]: Scalable[T, M] =
-    ${ buildScalableImpl[T, M] }
+  inline def buildScalable[S, P <: Message]: Scalable[S, P] =
+    ${ buildScalableImpl[S, P] }
 
-  def buildScalableImpl[T: Type, M <: Message: Type](using quotes: Quotes): Expr[Scalable[T, M]] = {
-    val protoScalableMacro = new ProtoScalableMacro[T, M]
+  def buildScalableImpl[S: Type, P <: Message: Type](using quotes: Quotes): Expr[Scalable[S, P]] = {
+    val protoScalableMacro = new ProtoScalableMacro[S, P]
     protoScalableMacro.buildScalableImpl
   }
 
-  inline def buildProtoable[T, M <: Message]: Protoable[T, M] =
-    ${ buildProtoableImpl[T, M] }
+  inline def buildProtoable[S, P <: Message]: Protoable[S, P] =
+    ${ buildProtoableImpl[S, P] }
 
-  def buildProtoableImpl[T: Type, M <: Message: Type](using quotes: Quotes): Expr[Protoable[T, M]] = {
-    val protoScalableMacro = new ProtoScalableMacro[T, M]
+  def buildProtoableImpl[S: Type, P <: Message: Type](using quotes: Quotes): Expr[Protoable[S, P]] = {
+    val protoScalableMacro = new ProtoScalableMacro[S, P]
     protoScalableMacro.buildProtoableImpl
   }
 
-  inline def scalable[T, M <: Message]: Scalable[T, M] = ${ scalasImpl[T, M] }
+  inline def scalable[S, P <: Message]: Scalable[S, P] = ${ scalasImpl[S, P] }
 
-  def scalasImpl[T: Type, M <: Message: Type](using quotes: Quotes): Expr[Scalable[T, M]] = {
-    val protoScalableMacro = new ProtoScalableMacro[T, M]
+  def scalasImpl[S: Type, P <: Message: Type](using quotes: Quotes): Expr[Scalable[S, P]] = {
+    val protoScalableMacro = new ProtoScalableMacro[S, P]
     protoScalableMacro.scalasImpl
   }
 
-  inline def protoScalable[T, M <: Message]: ProtoScalable[T, M] = ${ protoScalableImpl[T, M] }
+  inline def protoScalable[S, P <: Message]: ProtoScalable[S, P] = ${ protoScalableImpl[S, P] }
 
-  def protoScalableImpl[T: Type, M <: Message: Type](using quotes: Quotes): Expr[ProtoScalable[T, M]] = {
-    val protoScalableMacro = new ProtoScalableMacro[T, M]
+  def protoScalableImpl[S: Type, P <: Message: Type](using quotes: Quotes): Expr[ProtoScalable[S, P]] = {
+    val protoScalableMacro = new ProtoScalableMacro[S, P]
     protoScalableMacro.protoScalableImpl
   }
 }

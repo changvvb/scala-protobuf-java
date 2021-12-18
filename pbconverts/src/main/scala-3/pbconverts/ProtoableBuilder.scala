@@ -2,18 +2,18 @@ package pbconverts
 
 import com.google.protobuf.Message
 
-class ProtoableBuilder[T, M <: Message]() {
+class ProtoableBuilder[S, P <: Message]() {
 
-  inline def setField[TF, MF](inline protoFieldSelector: M ⇒ MF, inline value: T ⇒ TF): ProtoableBuilder[T, M] =
-    ProtoScalableMacro.protoableBuilderSetField[T, M, MF, TF](protoFieldSelector, value)
+  inline def setField[SF, PF](inline protoFieldSelector: P ⇒ PF, inline value: S ⇒ SF): ProtoableBuilder[S, P] =
+    ProtoScalableMacro.protoableBuilderSetField[S, P, PF, SF](protoFieldSelector, value)
 
-  inline def setFieldValue[TF, MF](inline protoFieldSelector: M ⇒ MF, inline value: TF): ProtoableBuilder[T, M] =
-    ProtoScalableMacro.protoableBuilderSetField[T, M, MF, TF](protoFieldSelector, value)
+  inline def setFieldValue[SF, PF](inline protoFieldSelector: P ⇒ PF, inline value: SF): ProtoableBuilder[S, P] =
+    ProtoScalableMacro.protoableBuilderSetField[S, P, PF, SF](protoFieldSelector, value)
 
-  inline def build: Protoable[T, M] = ProtoScalableMacro.buildProtoable[T, M]
+  inline def build: Protoable[S, P] = ProtoScalableMacro.buildProtoable[S, P]
 }
 
 object ProtoableBuilder {
   val _default = new ProtoableBuilder[Nothing, Nothing]
-  inline def apply[T, M <: Message]: ProtoableBuilder[T, M] = ProtoScalableMacro.protoableBuilder[T, M]
+  inline def apply[S, P <: Message]: ProtoableBuilder[S, P] = ProtoScalableMacro.protoableBuilder[S, P]
 }

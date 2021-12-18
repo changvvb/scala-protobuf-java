@@ -6,18 +6,18 @@ import com.google.protobuf.{BoolValue, DoubleValue, FloatValue, GeneratedMessage
 
 import scala.collection.JavaConverters._
 
-trait Protoable[-T, +M] {
-  def toProto(entity: T): M
+trait Protoable[-S, +P] {
+  def toProto(entity: S): P
 }
 
 object Protoable {
 
-  inline def apply[T <: Product, M <: GeneratedMessageV3 with MessageOrBuilder]: Protoable[T, M] =
-    ProtoScalableMacro.protoable[T, M]
+  inline def apply[S <: Product, P <: GeneratedMessageV3 with MessageOrBuilder]: Protoable[S, P] =
+    ProtoScalableMacro.protoable[S, P]
 
-  def apply[T, M](f: T ⇒ M): Protoable[T, M] =
-    new Protoable[T, M] {
-      override def toProto(entity: T): M = f(entity)
+  def apply[S, P](f: S ⇒ P): Protoable[S, P] =
+    new Protoable[S, P] {
+      override def toProto(entity: S): P = f(entity)
     }
 
   given Protoable[Double, java.lang.Double] = Protoable(_.toDouble)

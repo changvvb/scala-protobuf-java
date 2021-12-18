@@ -2,18 +2,18 @@ package pbconverts
 
 import com.google.protobuf.Message
 
-class ScalableBuilder[+T, M <: Message]() {
+class ScalableBuilder[+S, P <: Message]() {
 
-  inline def setField[TF, MF](inline scalaField: T ⇒ TF, inline value: M ⇒ MF): ScalableBuilder[T, M] =
-    ProtoScalableMacro.scalableBuilderSetField[T, M, TF, MF](scalaField, value)
+  inline def setField[SF, PF](inline scalaField: S ⇒ SF, inline value: P ⇒ PF): ScalableBuilder[S, P] =
+    ProtoScalableMacro.scalableBuilderSetField[S, P, SF, PF](scalaField, value)
 
-  inline def setFieldValue[TF, MF](inline scalaField: T ⇒ TF, inline value: MF): ScalableBuilder[T, M] =
-    ProtoScalableMacro.scalableBuilderSetField[T, M, TF, MF](scalaField, value)
+  inline def setFieldValue[SF, PF](inline scalaField: S ⇒ SF, inline value: PF): ScalableBuilder[S, P] =
+    ProtoScalableMacro.scalableBuilderSetField[S, P, SF, PF](scalaField, value)
 
-  inline def build: Scalable[T, M] = ProtoScalableMacro.buildScalable[T, M]
+  inline def build: Scalable[S, P] = ProtoScalableMacro.buildScalable[S, P]
 }
 
 object ScalableBuilder {
   val _default = new ScalableBuilder[Nothing, Nothing]
-  inline def apply[T, M <: Message]: ScalableBuilder[T, M] = ProtoScalableMacro.scalableBuilder[T, M]
+  inline def apply[S, P <: Message]: ScalableBuilder[S, P] = ProtoScalableMacro.scalableBuilder[S, P]
 }
