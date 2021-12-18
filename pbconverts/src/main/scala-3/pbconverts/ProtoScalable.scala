@@ -2,17 +2,17 @@ package pbconverts
 
 import com.google.protobuf.Message
 
-trait ProtoScalable[T, M] extends Protoable[T, M] with Scalable[T, M]
+trait ProtoScalable[S, P] extends Protoable[S, P] with Scalable[S, P]
 
 object ProtoScalable {
 
-  inline def apply[T <: Product, M <: Message]: ProtoScalable[T, M] = ProtoScalableMacro.protoScalable[T, M]
+  inline def apply[S <: Product, P <: Message]: ProtoScalable[S, P] = ProtoScalableMacro.protoScalable[S, P]
 
-  def apply[T, M](toProtoFun: T ⇒ M, toScalaFun: M ⇒ T): ProtoScalable[T, M] =
-    new ProtoScalable[T, M] {
+  def apply[S, P](toProtoFun: S ⇒ P, toScalaFun: P ⇒ S): ProtoScalable[S, P] =
+    new ProtoScalable[S, P] {
 
-      override def toScala(proto: M): T = toScalaFun(proto)
+      override def toScala(proto: P): S = toScalaFun(proto)
 
-      override def toProto(entity: T): M = toProtoFun(entity)
+      override def toProto(entity: S): P = toProtoFun(entity)
     }
 }
