@@ -12,11 +12,11 @@ import scala.quoted.Exprs
 class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
   import quotas.reflect._
 
-  private val scalaClassType = quotas.reflect.TypeRepr.of[T].dealias
-  private val protoClassType = quotas.reflect.TypeRepr.of[M].dealias
+  private val scalaClassType = TypeRepr.of[T].dealias
+  private val protoClassType = TypeRepr.of[M].dealias
 
-  private val scalaClassSymbol: quotas.reflect.Symbol = scalaClassType.typeSymbol
-  private val protoClassSymbol: quotas.reflect.Symbol = protoClassType.typeSymbol
+  private val scalaClassSymbol = scalaClassType.typeSymbol
+  private val protoClassSymbol = protoClassType.typeSymbol
 
   private val protoCompanionIdent = Ref(protoClassSymbol.companionModule)
   private val newBuilder = Select.overloaded(protoCompanionIdent, "newBuilder", Nil, Nil)
