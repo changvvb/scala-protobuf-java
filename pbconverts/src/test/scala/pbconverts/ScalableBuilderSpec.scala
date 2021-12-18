@@ -21,7 +21,6 @@ class ScalableBuilderSpec extends AnyFunSuite {
     assert(person.id == 1)
   }
 
-
   def assertTestMessage(testMessage: TestMessage) = {
     val pbTestMessage = Protoable[TestMessage, PBTestMessage].toProto(testMessage)
     val testMessage2 = ScalableBuilder[TestMessage, PBTestMessage]
