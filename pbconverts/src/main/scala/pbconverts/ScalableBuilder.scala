@@ -7,7 +7,8 @@ class ScalableBuilder[+T, M <: Message]() {
   inline def setField[TF, MF](inline scalaField: T ⇒ TF, inline value: M ⇒ MF): ScalableBuilder[T, M] =
     ProtoScalableMacro.scalableBuilderSetField[T, M, TF, MF](scalaField, value)
 
-  def setFieldValue[TF, MF](scalaField: T ⇒ TF, value: MF): ScalableBuilder[T, M] = ??? // macro ProtoScalableMacro.setScalaFieldImpl[T, M, TF, MF]
+  inline def setFieldValue[TF, MF](inline scalaField: T ⇒ TF, inline value: MF): ScalableBuilder[T, M] =
+    ProtoScalableMacro.scalableBuilderSetField[T, M, TF, MF](scalaField, value)
 
   inline def build: Scalable[T, M] = ProtoScalableMacro.buildScalable[T, M]
 }

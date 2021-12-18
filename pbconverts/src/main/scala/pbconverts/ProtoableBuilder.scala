@@ -7,7 +7,8 @@ class ProtoableBuilder[T, M <: Message]() {
   inline def setField[TF, MF](inline protoFieldSelector: M ⇒ MF, inline value: T ⇒ TF): ProtoableBuilder[T, M] =
     ProtoScalableMacro.protoableBuilderSetField[T, M, MF, TF](protoFieldSelector, value)
 
-  def setFieldValue[TF, MF](protoFieldSelector: M ⇒ MF, value: TF): this.type = ??? // macro ProtoScalableMacro.setProtoFieldImpl[T, M, TF, MF]
+  inline def setFieldValue[TF, MF](inline protoFieldSelector: M ⇒ MF, inline value: TF): ProtoableBuilder[T, M] =
+    ProtoScalableMacro.protoableBuilderSetField[T, M, MF, TF](protoFieldSelector, value)
 
   inline def build: Protoable[T, M] = ProtoScalableMacro.buildProtoable[T, M]
 }

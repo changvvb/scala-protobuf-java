@@ -2,11 +2,23 @@ package pbconverts
 
 import org.scalatest.funsuite.AnyFunSuite
 import pbconverts.ConversionTest.PBTestMessage
+import pbconverts.ConversionTest.PBPerson
 
 class ProtoableBuilderSpec extends AnyFunSuite {
   test("test ProtoableBuilder") {
     assertTestMessage(TestMessage.default)
     assertTestMessage(TestMessage.zero)
+  }
+
+  test("setFieldValue") {
+    val person = Person(1, "name", Some("123"), Seq("play"))
+    val pbPerson = ProtoableBuilder[Person, PBPerson]
+      .setFieldValue(_.getName, "my name")
+      .build
+      .toProto(person)
+
+    assert(pbPerson.getName == "my name")
+    assert(pbPerson.getId == 1)
   }
 
   def assertTestMessage(testMessage: TestMessage) = {

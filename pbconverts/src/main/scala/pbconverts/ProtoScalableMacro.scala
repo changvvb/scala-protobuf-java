@@ -136,7 +136,7 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
           case Select(_, _) if scalaTreeType <:< TypeRepr.of[AnyRef] =>
             val cond = Select.unique(scalaTree, "ne").appliedTo(Literal(NullConstant()))
             Some(If(cond, _tree, '{}.asTerm))
-          case _ => 
+          case _ =>
             Some(_tree)
         }
       }
@@ -386,17 +386,15 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
     def getCustomTrees(scalaIdent: Ident, protoBuilderIdent: Ident): Map[String, Term] = customTrees.map { case (key, tree) ⇒
       tree match { // setField
         case buildFunction: Expr[_] if buildFunction.isExprOf[_ => _] ⇒
-          val functionName = "builderFunction$" + MacroCache.getIdentityId
           val tree = buildFunction.asTerm
-          val valDef = ValDef(Symbol.newVal(Symbol.spliceOwner, functionName, tree.tpe, Flags.EmptyFlags, Symbol.noSymbol), Some(tree))
           val applied = Apply(Select.unique(tree, "apply"), List(scalaIdent))
           val buildExpr = new ToProtoProcessor(protoBuilderIdent, applied, applied.tpe, key).tree.get
 
           (key -> buildExpr)
-        //  case value: Tree ⇒ // setFieldValue
-        //  val identity = TermName("identity$" + MacroCache.getIdentityId)
-        //  val buildExpr = new ToProtoProcessor(q"$identity", value.tpe, caseClassType, protoType, key).tree.get
-        //  (key -> buildExpr) -> q"val $identity = $value"
+        case value: Expr[_] ⇒ // setFieldValue
+          val valueTerm = value.asTerm
+          val buildExpr = new ToProtoProcessor(protoBuilderIdent, valueTerm, valueTerm.tpe, key).tree.get
+          (key -> buildExpr)
       }
     }.toMap
     protosImpl({ (scalaIdent, protoBuilderIdent) =>
@@ -412,17 +410,16 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
     def getCustomTrees(protoIdent: Ident): Map[String, Term] = customTrees.map { case (key, tree) ⇒
       tree match {
         case buildFunction: Expr[_] if buildFunction.isExprOf[_ => _] ⇒ // setField
-          val functionName = "builderFunction$" + MacroCache.getIdentityId
           val selector = scalaClassSymbol.caseFields.find(_.name == key).get
           val tree = buildFunction.asTerm
-          val valDef = ValDef(Symbol.newVal(Symbol.spliceOwner, functionName, tree.tpe, Flags.EmptyFlags, Symbol.noSymbol), Some(tree))
           val applied = Apply(Select.unique(tree, "apply"), List(protoIdent))
           val expr = new ToScalaProcessor(selector, applied, applied.tpe).tree.get
           (key -> expr)
-        //  case value: Tree ⇒ // setFieldValue
-        //  val identity = TermName("identity$" + MacroCache.getIdentityId)
-        //  val expr = new ToScalaProcessor(selector.asMethod, q"$identity", value.tpe, resolveType[T], resolveType[M]).tree.get
-        //  (key -> expr) -> q"val $identity = $value"
+        case value: Expr[_] ⇒ // setFieldValue
+          val valueTerm = value.asTerm
+          val selector = scalaClassSymbol.caseFields.find(_.name == key).get
+          val buildExpr = new ToScalaProcessor(selector, valueTerm, valueTerm.tpe).tree.get
+          (key -> buildExpr)
       }
     }.toMap
     scalasImpl { protoIdent =>
@@ -435,7 +432,7 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
     }
   }
 
-  private def setScalaFieldImpl[TF, MF](scalaField: Expr[T => TF], value: Expr[M => MF]): Expr[ScalableBuilder[T, M]] = {
+  private def setScalaFieldImpl[TF, MF](scalaField: Expr[T => TF], value: Expr[(M => MF) | MF]): Expr[ScalableBuilder[T, M]] = {
     scalaField.asTerm match {
       case Inlined(_, _, Inlined(_, _, Block(List(DefDef(_, _, _, Some(Select(_, symbolName)))), _))) =>
         val builderId = getBuilderId()
@@ -445,7 +442,7 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
     }
   }
 
-  private def setProtoFieldImpl[TF: Type, MF: Type](protoFieldSelector: Expr[M ⇒ MF], value: Expr[T ⇒ TF]): Expr[ProtoableBuilder[T, M]] = {
+  private def setProtoFieldImpl[TF: Type, MF: Type](protoFieldSelector: Expr[M ⇒ MF], value: Expr[(T ⇒ TF) | TF]): Expr[ProtoableBuilder[T, M]] = {
     val getter = "^get(\\w+)$".r
     val listGetter = "^get(\\w+)List$".r
     val mapGetter = "^get(\\w+)Map$".r
@@ -455,9 +452,9 @@ class ProtoScalableMacro[T: Type, M <: Message: Type](using quotas: Quotes) {
           case mapGetter(n) if TypeRepr.of[MF] <:< TypeRepr.of[java.util.Map[_, _]] ⇒ n
           case listGetter(n) if TypeRepr.of[MF] <:< TypeRepr.of[java.util.List[_]] ⇒ n
           case getter(n) ⇒ n
-          case _ => report.errorAndAbort("Invalid setter")
+          case _ => report.errorAndAbort("Invalid field selector")
         }
-      case _ => report.errorAndAbort("Invalid setter")
+      case _ => report.errorAndAbort("Invalid field selector")
     }
 
     val builderId = Symbol.spliceOwner.owner.fullName
@@ -497,10 +494,10 @@ object ProtoScalableMacro {
     protoScalableMacro.protoableBuilderApply
   }
 
-  inline def protoableBuilderSetField[T, M <: Message, MF, TF](inline protoFieldSelector: M ⇒ MF, inline value: T ⇒ TF): ProtoableBuilder[T, M] =
+  inline def protoableBuilderSetField[T, M <: Message, MF, TF](inline protoFieldSelector: M ⇒ MF, inline value: (T ⇒ TF) | TF): ProtoableBuilder[T, M] =
     ${ protoableBuilderSetFieldImpl[T, M, MF, TF]('protoFieldSelector, 'value) }
 
-  def protoableBuilderSetFieldImpl[T: Type, M <: Message: Type, MF: Type, TF: Type](protoFieldSelector: Expr[M ⇒ MF], value: Expr[T ⇒ TF])(using
+  def protoableBuilderSetFieldImpl[T: Type, M <: Message: Type, MF: Type, TF: Type](protoFieldSelector: Expr[M ⇒ MF], value: Expr[(T ⇒ TF) | TF])(using
       quotes: Quotes
   ): Expr[ProtoableBuilder[T, M]] = {
     val protoScalableMacro = new ProtoScalableMacro[T, M]
@@ -514,10 +511,10 @@ object ProtoScalableMacro {
     protoScalableMacro.scalableBuilderApply
   }
 
-  inline def scalableBuilderSetField[T, M <: Message, TF, MF](inline scalaFieldSelector: T ⇒ TF, inline value: M ⇒ MF): ScalableBuilder[T, M] =
+  inline def scalableBuilderSetField[T, M <: Message, TF, MF](inline scalaFieldSelector: T ⇒ TF, inline value: (M ⇒ MF) | MF): ScalableBuilder[T, M] =
     ${ scalableBuilderSetFieldImpl[T, M, TF, MF]('scalaFieldSelector, 'value) }
 
-  def scalableBuilderSetFieldImpl[T: Type, M <: Message: Type, TF: Type, MF: Type](scalaFieldSelector: Expr[T ⇒ TF], value: Expr[M ⇒ MF])(using
+  def scalableBuilderSetFieldImpl[T: Type, M <: Message: Type, TF: Type, MF: Type](scalaFieldSelector: Expr[T ⇒ TF], value: Expr[(M ⇒ MF) | MF])(using
       quotes: Quotes
   ): Expr[ScalableBuilder[T, M]] = {
     val protoScalableMacro = new ProtoScalableMacro[T, M]
