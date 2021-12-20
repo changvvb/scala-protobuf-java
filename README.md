@@ -5,7 +5,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.changvvb/scala-protobuf-java_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.changvvb/scala-protobuf-java_2.13)
 
 ### News
-`scala-protobuf-java` has support scala 3.
+`scala-protobuf-java` has supported scala 3.
 
 ### What is this
 `scala-protobuf-java` is a conversion tool between `scala` types and `protobuf-java` types. It can help impatient you save a lot of codes.
