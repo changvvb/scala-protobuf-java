@@ -319,19 +319,18 @@ class ProtoScalableMacro(val c: whitebox.Context) {
     val caseClassType = resolveType[T]
     val protoType = resolveType[M]
     val customTrees = MacroCache.builderFunctionTrees.getOrElse(getBuilderId(), mutable.Map.empty)
-    val (fixedCustomTrees, preTrees) = customTrees.map {
-      case (key, tree) ⇒
-        tree match { // setField
-          case buildFunction: Function ⇒
-            val functionName = TermName("builderFunction$" + MacroCache.getIdentityId)
-            val fromType = buildFunction.tpe.typeArgs.last // buildFunction 的返回值
-            val buildExpr = new ToProtoProcessor(q"$functionName($entityIdent)", fromType, caseClassType, protoType, key).tree.get
-            (key -> buildExpr) -> q"val $functionName = $buildFunction"
-          case value: Tree ⇒ // setFieldValue
-            val identity = TermName("identity$" + MacroCache.getIdentityId)
-            val buildExpr = new ToProtoProcessor(q"$identity", value.tpe, caseClassType, protoType, key).tree.get
-            (key -> buildExpr) -> q"val $identity = $value"
-        }
+    val (fixedCustomTrees, preTrees) = customTrees.map { case (key, tree) ⇒
+      tree match { // setField
+        case buildFunction: Function ⇒
+          val functionName = TermName("builderFunction$" + MacroCache.getIdentityId)
+          val fromType = buildFunction.tpe.typeArgs.last // buildFunction 的返回值
+          val buildExpr = new ToProtoProcessor(q"$functionName($entityIdent)", fromType, caseClassType, protoType, key).tree.get
+          (key -> buildExpr) -> q"val $functionName = $buildFunction"
+        case value: Tree ⇒ // setFieldValue
+          val identity = TermName("identity$" + MacroCache.getIdentityId)
+          val buildExpr = new ToProtoProcessor(q"$identity", value.tpe, caseClassType, protoType, key).tree.get
+          (key -> buildExpr) -> q"val $identity = $value"
+      }
     }.unzip
     val protoableFieldConvertTrees = (defaultProtoableFieldConvertTrees(caseClassType, protoType) ++ fixedCustomTrees.toMap).values
     protosImpl(caseClassType, protoType, protoableFieldConvertTrees, preTrees)
@@ -344,19 +343,18 @@ class ProtoScalableMacro(val c: whitebox.Context) {
     val customTrees = MacroCache.builderFunctionTrees.getOrElse(builderId, mutable.Map.empty)
     val entityType = resolveType[T]
 
-    val (fixedCustomTrees, preTrees) = customTrees.map {
-      case (key, tree) ⇒
-        val selector = entityType.member(TermName(key))
-        tree match {
-          case buildFunction: Function ⇒ // setField
-            val functionName = TermName("builderFunction$" + MacroCache.getIdentityId)
-            val expr = new ToScalaProcessor(selector.asMethod, q"$functionName($protoIdent)", buildFunction.body.tpe, resolveType[T], resolveType[M]).tree.get
-            (key -> expr) -> q"val $functionName = $buildFunction"
-          case value: Tree ⇒ // setFieldValue
-            val identity = TermName("identity$" + MacroCache.getIdentityId)
-            val expr = new ToScalaProcessor(selector.asMethod, q"$identity", value.tpe, resolveType[T], resolveType[M]).tree.get
-            (key -> expr) -> q"val $identity = $value"
-        }
+    val (fixedCustomTrees, preTrees) = customTrees.map { case (key, tree) ⇒
+      val selector = entityType.member(TermName(key))
+      tree match {
+        case buildFunction: Function ⇒ // setField
+          val functionName = TermName("builderFunction$" + MacroCache.getIdentityId)
+          val expr = new ToScalaProcessor(selector.asMethod, q"$functionName($protoIdent)", buildFunction.body.tpe, resolveType[T], resolveType[M]).tree.get
+          (key -> expr) -> q"val $functionName = $buildFunction"
+        case value: Tree ⇒ // setFieldValue
+          val identity = TermName("identity$" + MacroCache.getIdentityId)
+          val expr = new ToScalaProcessor(selector.asMethod, q"$identity", value.tpe, resolveType[T], resolveType[M]).tree.get
+          (key -> expr) -> q"val $identity = $value"
+      }
     }.unzip
 
     val scalableFieldConvertTrees = (defalutScalableFieldConvertTrees(caseClassType, protoType) ++ fixedCustomTrees.toMap).values

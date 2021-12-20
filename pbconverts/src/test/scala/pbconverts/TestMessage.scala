@@ -28,6 +28,9 @@ case class TestMessage(
 )
 
 object TestMessage {
+
+  def apply(): TestMessage = ???
+
   def default =
     TestMessage(
       intValue = 64,

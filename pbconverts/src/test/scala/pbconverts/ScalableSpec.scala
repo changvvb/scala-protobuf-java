@@ -5,6 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import pbconverts.ConversionTest.{IntMessage, PBPerson}
 
 class ScalableSpec extends AnyFunSuite {
+
   test("Scalable") {
     val person = Person(1L, "person name", Some("123456"), Seq("play games", "sing song"))
 

@@ -1,59 +1,62 @@
 import sbt._
 
 lazy val scala213 = "2.13.6"
-lazy val scala212 = "2.12.12"
+lazy val scala212 = "2.12.14"
+lazy val scala3 = "3.1.0"
 
-lazy val supportedScalaVersions = List(scala212, scala213)
+lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
 val commonSettings = Seq(
-    scalaVersion := scala213,
-    scalacOptions += "-language:experimental.macros",
-    organization := "com.github.changvvb",
-    crossScalaVersions := supportedScalaVersions,
-    releasePublishArtifactsAction := PgpKeys.publishSigned.value
+  scalaVersion := scala3,
+  scalacOptions += "-language:experimental.macros",
+  organization := "com.github.changvvb",
+  crossScalaVersions := supportedScalaVersions,
+  releasePublishArtifactsAction := PgpKeys.publishSigned.value
 )
 
-lazy val `scala-protobuf-java-macro` = project.in(file("pbconverts-macro"))
-  .settings(libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value))
-  .settings(commonSettings)
-  .enablePlugins(ProtobufPlugin)
 
-lazy val `scala-protobuf-java` = project.in(file("pbconverts"))
-  .settings(libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test")
+lazy val `scala-protobuf-java` = project
+  .in(file("pbconverts"))
+  .settings(libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.9" % "test")
+  .settings(libraryDependencies ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, _)) => Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+      case _            => Nil
+    }
+  })
   .settings(commonSettings)
-  .dependsOn(`scala-protobuf-java-macro`)
   .enablePlugins(ProtobufTestPlugin)
 
-lazy val root = project.in(file(".")).withId("root")
-  .aggregate(`scala-protobuf-java`, `scala-protobuf-java-macro`)
+lazy val root = project
+  .in(file("."))
+  .withId("root")
+  .aggregate(`scala-protobuf-java`)
   .settings(publishArtifact := false)
 
-scalafmtOnCompile in ThisBuild := true
+ThisBuild / scalafmtOnCompile := true
 
-// publish
+ThisBuild / releasePublishArtifactsAction := releaseStepCommandAndRemaining("+publishSigned")
 
-releasePublishArtifactsAction in ThisBuild := releaseStepCommandAndRemaining("+publishSigned")
-
-publishTo in ThisBuild := {
-    val nexus = "https://oss.sonatype.org/"
-    if (version.value.trim.endsWith("SNAPSHOT"))
-        Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-        Some("releases" at nexus + "service/local/staging/deploy/maven2")
+ThisBuild / publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (version.value.trim.endsWith("SNAPSHOT"))
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
-publishMavenStyle in ThisBuild := true
+ThisBuild / publishMavenStyle := true
 
-credentials in ThisBuild  += Credentials(Path.userHome / ".ivy2" / ".credentials_sonatype")
+ThisBuild / credentials += Credentials(Path.userHome / ".ivy2" / ".credentials_sonatype")
 
-publishArtifact in Test := false
+Test / publishArtifact := false
 
-pomIncludeRepository in ThisBuild  := { _ => false }
+ThisBuild / pomIncludeRepository := { _ => false }
 
-homepage in ThisBuild  := Some(url("https://github.com/changvvb/scala-protobuf-java"))
+ThisBuild / homepage := Some(url("https://github.com/changvvb/scala-protobuf-java"))
 
-pomExtra in ThisBuild  := {
-    <licenses>
+ThisBuild / pomExtra := {
+  <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
@@ -74,5 +77,5 @@ pomExtra in ThisBuild  := {
       </developers>
 }
 
-publishConfiguration in ThisBuild  := publishConfiguration.value.withOverwrite(true)
-publishLocalConfiguration in ThisBuild  := publishLocalConfiguration.value.withOverwrite(true)
+ThisBuild / publishConfiguration := publishConfiguration.value.withOverwrite(true)
+ThisBuild / publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true)

@@ -1,8 +1,9 @@
 package pbconverts
 
 import com.google.protobuf.ByteString
+// import org.scalatest.funsuite.AnyFunSuite
+import ConversionTest.{PBTestBytes, PBTestMessage}
 import org.scalatest.funsuite.AnyFunSuite
-import pbconverts.ConversionTest.{PBTestBytes, PBTestMessage}
 
 class MapSpec extends AnyFunSuite {
   test("test map") {
@@ -17,6 +18,7 @@ class MapSpec extends AnyFunSuite {
   }
 
   case class TestBytes(m: Map[String, Int])
+
   test("test conversion between bytes in protobuf and Map in case class") {
     val pbTest1 = ProtoableBuilder[TestBytes, PBTestBytes]
       .setField(_.getTestBytes, x => ByteString.copyFromUtf8(x.m.keys.mkString(",")))
