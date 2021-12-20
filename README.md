@@ -4,22 +4,24 @@
 [![codecov](https://codecov.io/gh/changvvb/scala-protobuf-java/branch/master/graph/badge.svg)](https://codecov.io/gh/changvvb/scala-protobuf-java)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.changvvb/scala-protobuf-java_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.changvvb/scala-protobuf-java_2.13)
 
+### News
+`scala-protobuf-java` has support scala 3.
 
 ### What is this
 `scala-protobuf-java` is a conversion tool between `scala` types and `protobuf-java` types. It can help impatient you save a lot of codes.
 `scala-protobuf-java` use scala macro to generate what you need, so it's type safe at compile time. Now you just keep free to write your code, `scala-proto-java` will check the error at compile time. 
 
 ### Import to your project
-sbt (for `2.12` and `2.13`. If you need more, just submit a issue or PR)
+sbt (for `2.12`, `2.13` and scala 3. If you need more, just submit a issue or PR)
 ```scala
-libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.2.0"
+libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.3.0"
 ```
 maven
 ```xml
 <dependency>
   <groupId>com.github.changvvb</groupId>
   <artifactId>scala-protobuf-java_2.13</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
