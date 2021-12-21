@@ -12,7 +12,7 @@
 `scala-protobuf-java` use scala macro to generate what you need, so it's type safe at compile time. Now you just keep free to write your code, `scala-proto-java` will check the error at compile time. 
 
 ### Import to your project
-sbt (for `2.12`, `2.13` and scala 3. If you need more, just submit a issue or PR)
+sbt (for `2.12`, `2.13` and scala 3. If you need more, just submit an issue or PR)
 ```scala
 libraryDependencies += "com.github.changvvb" %% "scala-protobuf-java" % "0.3.0"
 ```
@@ -123,7 +123,7 @@ Scalable[ParentMessage, PBParentMessage].toScala(PBParentMessage.newBuilder().bu
 
 > Hint: you can replace `Protoable[SubMessage,PBSubMessage]` and `Scalable[SubMessage,PBSubMessage]` with `ProtoScalable[SubMessage,PBSubMessage]`
 
-#### Custom you own conversion
+#### Custom your own conversion
 If you want use `Protoable[Person, PBPerson]` to convert a `Person` object to `PBPerson` object but you want custom field `id`.
 You can use `ProtoableBuilder`:
 ```scala
